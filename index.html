@@ -16,9 +16,8 @@ section {padding:20px 15px;text-align:center;display:none;}
 section.active {display:block;}
 h2,h3 {margin-bottom:12px;text-shadow:0 0 8px #ff007f,0 0 10px #00bfff;}
 .card-container {display:flex;flex-wrap:wrap;justify-content:center;gap:15px;margin-top:15px;}
-.card {background:#1a1a1a;padding:12px;border-radius:10px;width:200px;box-shadow:0 0 10px rgba(255,0,127,0.3);display:flex;align-items:center;gap:10px;transition:0.3s;}
-.card img {width:40px;height:40px;border-radius:50%;}
-.card:hover {transform:translateY(-4px);box-shadow:0 0 15px rgba(255,0,127,0.5);}
+.card {padding:12px;border-radius:10px;width:140px;text-align:center;font-weight:bold;font-size:1.1rem;box-shadow:0 0 10px rgba(255,255,255,0.2);transition:0.3s;}
+.card:hover {transform:translateY(-4px);box-shadow:0 0 15px rgba(255,255,255,0.4);}
 table {width:90%;max-width:900px;margin:15px auto;border-collapse:collapse;}
 th,td {border:1px solid #444;padding:8px;text-align:center;}
 th {background:#222;}
@@ -78,32 +77,16 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 <h2>Teams</h2>
 
 <h3>South Division</h3>
-<div class="card-container">
-<div class="card"><img src="https://cdn-icons-png.flaticon.com/512/616/616544.png" alt="Sharks">Sharks</div>
-<div class="card"><img src="https://cdn-icons-png.flaticon.com/512/616/616404.png" alt="Wolves">Wolves</div>
-<div class="card"><img src="https://cdn-icons-png.flaticon.com/512/616/616486.png" alt="Falcons">Falcons</div>
-</div>
+<div class="card-container" id="southTeams"></div>
 
 <h3>West Division</h3>
-<div class="card-container">
-<div class="card"><img src="https://cdn-icons-png.flaticon.com/512/616/616489.png" alt="Leopards">Leopards</div>
-<div class="card"><img src="https://cdn-icons-png.flaticon.com/512/616/616494.png" alt="Dragons">Dragons</div>
-<div class="card"><img src="https://cdn-icons-png.flaticon.com/512/616/616433.png" alt="Bison">Bison</div>
-</div>
+<div class="card-container" id="westTeams"></div>
 
 <h3>North Division</h3>
-<div class="card-container">
-<div class="card"><img src="https://cdn-icons-png.flaticon.com/512/616/616429.png" alt="Cobras">Cobras</div>
-<div class="card"><img src="https://cdn-icons-png.flaticon.com/512/616/616422.png" alt="Stallions">Stallions</div>
-<div class="card"><img src="https://cdn-icons-png.flaticon.com/512/616/616438.png" alt="Scorpions">Scorpions</div>
-</div>
+<div class="card-container" id="northTeams"></div>
 
 <h3>East Division</h3>
-<div class="card-container">
-<div class="card"><img src="https://cdn-icons-png.flaticon.com/512/616/616496.png" alt="Iguanas">Iguanas</div>
-<div class="card"><img src="https://cdn-icons-png.flaticon.com/512/616/616401.png" alt="Wildcats">Wildcats</div>
-<div class="card"><img src="https://cdn-icons-png.flaticon.com/512/616/616402.png" alt="Vultures">Vultures</div>
-</div>
+<div class="card-container" id="eastTeams"></div>
 </section>
 
 <section id="standings">
@@ -165,9 +148,7 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 <footer>© 2026 Shmears Draft League</footer>
 
 <script>
-// Wait until DOM loaded
 document.addEventListener('DOMContentLoaded', function(){
-  // SPA navigation
   const navLinks = document.querySelectorAll('nav a');
   navLinks.forEach(link=>{
     link.addEventListener('click',()=>{
@@ -179,53 +160,52 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   });
 
-  // Teams & logos
   const teams = ["Sharks","Wolves","Falcons","Leopards","Dragons","Bison","Cobras","Stallions","Scorpions","Iguanas","Wildcats","Vultures"];
-  const logos = {
-    "Sharks":"https://cdn-icons-png.flaticon.com/512/616/616544.png",
-    "Wolves":"https://cdn-icons-png.flaticon.com/512/616/616404.png",
-    "Falcons":"https://cdn-icons-png.flaticon.com/512/616/616486.png",
-    "Leopards":"https://cdn-icons-png.flaticon.com/512/616/616489.png",
-    "Dragons":"https://cdn-icons-png.flaticon.com/512/616/616494.png",
-    "Bison":"https://cdn-icons-png.flaticon.com/512/616/616433.png",
-    "Cobras":"https://cdn-icons-png.flaticon.com/512/616/616429.png",
-    "Stallions":"https://cdn-icons-png.flaticon.com/512/616/616422.png",
-    "Scorpions":"https://cdn-icons-png.flaticon.com/512/616/616438.png",
-    "Iguanas":"https://cdn-icons-png.flaticon.com/512/616/616496.png",
-    "Wildcats":"https://cdn-icons-png.flaticon.com/512/616/616401.png",
-    "Vultures":"https://cdn-icons-png.flaticon.com/512/616/616402.png"
+  const colors = {
+    "Sharks":"#1CA9C9","Wolves":"#6E6E6E","Falcons":"#D32F2F","Leopards":"#FBC02D",
+    "Dragons":"#388E3C","Bison":"#8D6E63","Cobras":"#7B1FA2","Stallions":"#F57C00",
+    "Scorpions":"#212121","Iguanas":"#C0CA33","Wildcats":"#1976D2","Vultures":"#424242"
+  };
+  const divisions = {
+    "South":["Sharks","Wolves","Falcons"],
+    "West":["Leopards","Dragons","Bison"],
+    "North":["Cobras","Stallions","Scorpions"],
+    "East":["Iguanas","Wildcats","Vultures"]
   };
 
-  // Preload 11 weeks schedule (each team plays once per week in some order)
+  function renderTeams(){
+    for(const div in divisions){
+      const container = document.getElementById(div.toLowerCase()+"Teams");
+      container.innerHTML='';
+      divisions[div].forEach(t=>{
+        const card=document.createElement('div'); card.className='card'; card.style.background=colors[t]; card.textContent=t;
+        container.appendChild(card);
+      });
+    }
+  }
+  renderTeams();
+
   let weeks = [];
   for(let w=0; w<11; w++){
     let matches = [];
-    for(let i=0;i<teams.length;i+=2){
-      matches.push({home:teams[i],away:teams[i+1],homeScore:0,awayScore:0});
-    }
+    for(let i=0;i<teams.length;i+=2){matches.push({home:teams[i],away:teams[i+1],homeScore:0,awayScore:0});}
     weeks.push(matches);
   }
 
   let standings = teams.map((t,i)=>{
     let div = ["South","South","South","West","West","West","North","North","North","East","East","East"][i];
-    return {team:t,division:div,wins:0,losses:0,logo:logos[t]};
+    return {team:t,division:div,wins:0,losses:0};
   });
 
-  // Week selector
   const weekSelect = document.getElementById('weekSelect');
-  for(let i=1;i<=11;i++){
-    let opt = document.createElement('option'); opt.value=i; opt.textContent='Week '+i;
-    weekSelect.appendChild(opt);
-  }
-
+  for(let i=1;i<=11;i++){let opt=document.createElement('option');opt.value=i;opt.textContent='Week '+i;weekSelect.appendChild(opt);}
   weekSelect.addEventListener('change',()=>renderLive(parseInt(weekSelect.value)-1));
-  renderLive(0); refreshStandings();
 
   function renderLive(week){
     const liveContainer=document.getElementById('live-cards'); liveContainer.innerHTML='';
     weeks[week].forEach(m=>{
       const card=document.createElement('div'); card.className='card';
-      card.innerHTML=`<img src="${logos[m.home]}" alt="${m.home}">${m.home} ${m.homeScore} - ${m.awayScore} ${m.away}<img src="${logos[m.away]}" alt="${m.away}">`;
+      card.style.background=colors[m.home]; card.textContent=`${m.home} ${m.homeScore} - ${m.awayScore} ${m.away}`;
       liveContainer.appendChild(card);
     });
   }
@@ -233,8 +213,8 @@ document.addEventListener('DOMContentLoaded', function(){
   function refreshStandings(){
     standings.forEach(s=>{s.wins=0;s.losses=0;});
     weeks.forEach(wk=>{wk.forEach(m=>{
-      let h=standings.find(t=>t.team===m.home);
-      let a=standings.find(t=>t.team===m.away);
+      const h=standings.find(t=>t.team===m.home);
+      const a=standings.find(t=>t.team===m.away);
       if(m.homeScore>m.awayScore){h.wins++;a.losses++;}
       else if(m.awayScore>m.homeScore){a.wins++;h.losses++;}
     });});
@@ -247,14 +227,15 @@ document.addEventListener('DOMContentLoaded', function(){
       divData.forEach(s=>{
         const wp=s.wins+s.losses===0?0:(s.wins/(s.wins+s.losses)*100).toFixed(1);
         const tr=document.createElement('tr');
-        tr.innerHTML=`<td><img src="${s.logo}" alt="${s.team}">${s.team}</td><td>${s.wins}</td><td>${s.losses}</td><td>${wp}%</td>`;
+        tr.innerHTML=`<td style="background:${colors[s.team]};font-weight:bold;">${s.team}</td><td>${s.wins}</td><td>${s.losses}</td><td>${wp}%</td>`;
         table.appendChild(tr);
       });
       container.appendChild(divTable);
     });
   }
 
-  // Admin
+  renderLive(0); refreshStandings();
+
   window.unlockAdmin=function(){
     if(document.getElementById('adminPass').value==='shmearsadmin'){
       document.getElementById('adminPanel').style.display='block'; renderAdmin();
@@ -287,5 +268,6 @@ document.addEventListener('DOMContentLoaded', function(){
 
 });
 </script>
+
 </body>
 </html>
