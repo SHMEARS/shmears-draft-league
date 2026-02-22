@@ -15,8 +15,8 @@ section{display:none;padding:20px;text-align:center}
 .active{display:block}
 .card{padding:10px;margin:8px auto;max-width:500px;border-radius:8px;font-weight:600}
 .division{margin-top:20px}
-table{width:90%;max-width:700px;margin:10px auto;border-collapse:collapse;font-size:14px}
-th,td{border:1px solid #333;padding:6px;text-align:center}
+table{width:90%;max-width:700px;margin:10px auto;border-collapse:collapse}
+th,td{border:1px solid #333;padding:6px}
 .news{background:#1a1a1a;margin:6px auto;padding:8px;border-radius:6px;max-width:600px;text-align:left}
 select,input,textarea{margin:5px;padding:6px;border-radius:6px;border:none}
 textarea{width:90%;height:80px}
@@ -94,7 +94,6 @@ textarea{width:90%;height:80px}
 </section>
 
 <script>
-const ADMIN_PASSWORD = "jaw";
 
 const teams = ["Sharks","Wolves","Falcons","Leopards","Dragons","Bison","Cobras","Stallions","Scorpions","Iguanas","Wildcats","Vultures"];
 
@@ -188,10 +187,10 @@ document.getElementById(id).classList.add("active");
 }
 
 function unlock(){
-if(document.getElementById("adminPass").value===ADMIN_PASSWORD){
+if(document.getElementById("adminPass").value==="shmearsadmin"){
 document.getElementById("adminPanel").style.display="block";
 renderAdmin();
-} else alert("Wrong password");
+}
 }
 
 function renderAdmin(){
@@ -214,7 +213,6 @@ g.awayScore=parseInt(document.getElementById("a"+i).value)||0;
 });
 calculateStandings();
 
-/* Players */
 let playerText=document.getElementById("adminPlayers").value.split("\n");
 let grouped={};
 playerText.forEach(line=>{
@@ -233,7 +231,6 @@ grouped[t].forEach(p=>html+=`<div>${p}</div>`);
 }
 document.getElementById("playersArea").innerHTML=html;
 
-/* Transactions */
 let news=document.getElementById("adminNews").value.split("\n").reverse();
 let newsHtml="";
 news.forEach(n=>{ if(n.trim()!="") newsHtml+=`<div class="news">${n}</div>`;});
@@ -264,6 +261,7 @@ calculateStandings();
 }
 
 init();
+
 </script>
 </body>
 </html>
