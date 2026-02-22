@@ -8,7 +8,7 @@
 <style>
 body {margin:0;font-family:'Montserrat',sans-serif;background:#0c0c0c;color:#fff;}
 header {text-align:center;padding:12px;background:linear-gradient(90deg,#ff007f,#00bfff);}
-header h1 {font-family:'Oswald',sans-serif;font-size:1.6rem;margin:0;text-shadow:0 0 8px #fff;}
+header h1 {font-family:'Oswald',sans-serif;font-size:1.5rem;margin:0;text-shadow:0 0 8px #fff;}
 nav {position:sticky;top:0;background:#111;display:flex;justify-content:center;flex-wrap:wrap;gap:8px;padding:10px;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,0.5);}
 nav a {color:#fff;text-decoration:none;font-weight:bold;padding:6px 12px;border-radius:8px;transition:0.3s;cursor:pointer;}
 nav a.active {background:linear-gradient(90deg,#ff007f,#00bfff);}
@@ -51,7 +51,6 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 <a data-section="admin">Admin</a>
 </nav>
 
-<!-- Sections -->
 <section id="home" class="active">
 <h2>Welcome to Shmears Draft League</h2>
 <p><strong>Opening Day: March 26, 2026</strong></p>
@@ -158,7 +157,7 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 <h3>Edit Transactions</h3>
 <textarea id="adminTransactions" rows="4"></textarea>
 
-<button onclick="generateJSON()">Save & Update</button>
+<button onclick="saveAdmin()">Save & Update</button>
 <pre id="jsonOutput"></pre>
 </div>
 </section>
@@ -166,70 +165,127 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 <footer>© 2026 Shmears Draft League</footer>
 
 <script>
-// SPA navigation
-const navLinks=document.querySelectorAll('nav a');
-navLinks.forEach(link=>{
-link.addEventListener('click',()=>{
-navLinks.forEach(l=>l.classList.remove('active'));
-link.classList.add('active');
-document.querySelectorAll('section').forEach(sec=>sec.classList.remove('active'));
-document.getElementById(link.dataset.section).classList.add('active');
+// Wait until DOM loaded
+document.addEventListener('DOMContentLoaded', function(){
+  // SPA navigation
+  const navLinks = document.querySelectorAll('nav a');
+  navLinks.forEach(link=>{
+    link.addEventListener('click',()=>{
+      navLinks.forEach(l=>l.classList.remove('active'));
+      link.classList.add('active');
+      document.querySelectorAll('section').forEach(sec=>sec.classList.remove('active'));
+      document.getElementById(link.dataset.section).classList.add('active');
+      if(link.dataset.section==='admin') renderAdmin();
+    });
+  });
+
+  // Teams & logos
+  const teams = ["Sharks","Wolves","Falcons","Leopards","Dragons","Bison","Cobras","Stallions","Scorpions","Iguanas","Wildcats","Vultures"];
+  const logos = {
+    "Sharks":"https://cdn-icons-png.flaticon.com/512/616/616544.png",
+    "Wolves":"https://cdn-icons-png.flaticon.com/512/616/616404.png",
+    "Falcons":"https://cdn-icons-png.flaticon.com/512/616/616486.png",
+    "Leopards":"https://cdn-icons-png.flaticon.com/512/616/616489.png",
+    "Dragons":"https://cdn-icons-png.flaticon.com/512/616/616494.png",
+    "Bison":"https://cdn-icons-png.flaticon.com/512/616/616433.png",
+    "Cobras":"https://cdn-icons-png.flaticon.com/512/616/616429.png",
+    "Stallions":"https://cdn-icons-png.flaticon.com/512/616/616422.png",
+    "Scorpions":"https://cdn-icons-png.flaticon.com/512/616/616438.png",
+    "Iguanas":"https://cdn-icons-png.flaticon.com/512/616/616496.png",
+    "Wildcats":"https://cdn-icons-png.flaticon.com/512/616/616401.png",
+    "Vultures":"https://cdn-icons-png.flaticon.com/512/616/616402.png"
+  };
+
+  // Preload 11 weeks schedule (each team plays once per week in some order)
+  let weeks = [];
+  for(let w=0; w<11; w++){
+    let matches = [];
+    for(let i=0;i<teams.length;i+=2){
+      matches.push({home:teams[i],away:teams[i+1],homeScore:0,awayScore:0});
+    }
+    weeks.push(matches);
+  }
+
+  let standings = teams.map((t,i)=>{
+    let div = ["South","South","South","West","West","West","North","North","North","East","East","East"][i];
+    return {team:t,division:div,wins:0,losses:0,logo:logos[t]};
+  });
+
+  // Week selector
+  const weekSelect = document.getElementById('weekSelect');
+  for(let i=1;i<=11;i++){
+    let opt = document.createElement('option'); opt.value=i; opt.textContent='Week '+i;
+    weekSelect.appendChild(opt);
+  }
+
+  weekSelect.addEventListener('change',()=>renderLive(parseInt(weekSelect.value)-1));
+  renderLive(0); refreshStandings();
+
+  function renderLive(week){
+    const liveContainer=document.getElementById('live-cards'); liveContainer.innerHTML='';
+    weeks[week].forEach(m=>{
+      const card=document.createElement('div'); card.className='card';
+      card.innerHTML=`<img src="${logos[m.home]}" alt="${m.home}">${m.home} ${m.homeScore} - ${m.awayScore} ${m.away}<img src="${logos[m.away]}" alt="${m.away}">`;
+      liveContainer.appendChild(card);
+    });
+  }
+
+  function refreshStandings(){
+    standings.forEach(s=>{s.wins=0;s.losses=0;});
+    weeks.forEach(wk=>{wk.forEach(m=>{
+      let h=standings.find(t=>t.team===m.home);
+      let a=standings.find(t=>t.team===m.away);
+      if(m.homeScore>m.awayScore){h.wins++;a.losses++;}
+      else if(m.awayScore>m.homeScore){a.wins++;h.losses++;}
+    });});
+    const container=document.getElementById('standings-container'); container.innerHTML='';
+    [...new Set(standings.map(s=>s.division))].forEach(div=>{
+      const divData=standings.filter(s=>s.division===div);
+      const divTable=document.createElement('div'); divTable.className='division-table';
+      divTable.innerHTML=`<h3>${div} Division</h3><table><tr><th>Team</th><th>Wins</th><th>Losses</th><th>Win %</th></tr></table>`;
+      const table=divTable.querySelector('table');
+      divData.forEach(s=>{
+        const wp=s.wins+s.losses===0?0:(s.wins/(s.wins+s.losses)*100).toFixed(1);
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td><img src="${s.logo}" alt="${s.team}">${s.team}</td><td>${s.wins}</td><td>${s.losses}</td><td>${wp}%</td>`;
+        table.appendChild(tr);
+      });
+      container.appendChild(divTable);
+    });
+  }
+
+  // Admin
+  window.unlockAdmin=function(){
+    if(document.getElementById('adminPass').value==='shmearsadmin'){
+      document.getElementById('adminPanel').style.display='block'; renderAdmin();
+    } else alert('Wrong password');
+  }
+
+  function renderAdmin(){
+    const editLive=document.getElementById('editLive'); editLive.innerHTML='';
+    let week=parseInt(weekSelect.value)-1;
+    weeks[week].forEach((m,i)=>{
+      const div=document.createElement('div');
+      div.innerHTML=`Home:<input type="text" id="home${i}" value="${m.home}"> Score:<input type="number" id="homeScore${i}" value="${m.homeScore}"> Away:<input type="text" id="away${i}" value="${m.away}"> Score:<input type="number" id="awayScore${i}" value="${m.awayScore}">`;
+      editLive.appendChild(div);
+    });
+    document.getElementById('adminUpcoming').value=document.getElementById('upcomingGames').innerHTML;
+    document.getElementById('adminDraftResults').value=document.getElementById('draftResults').innerHTML;
+  }
+
+  window.saveAdmin=function(){
+    let week=parseInt(weekSelect.value)-1;
+    weeks[week].forEach((m,i)=>{
+      m.home=document.getElementById(`home${i}`).value;
+      m.away=document.getElementById(`away${i}`).value;
+      m.homeScore=parseInt(document.getElementById(`homeScore${i}`).value);
+      m.awayScore=parseInt(document.getElementById(`awayScore${i}`).value);
+    });
+    renderLive(week); refreshStandings();
+    alert('Saved!');
+  }
+
 });
-});
-
-// Data
-let data={
-weeks:[], // 11 weeks
-standings:[], hub:{upcoming:"",draftResults:""}, players:[], freeAgents:[], transactions:[]
-};
-
-// Initialize teams
-const teams=["Sharks","Wolves","Falcons","Leopards","Dragons","Bison","Cobras","Stallions","Scorpions","Iguanas","Wildcats","Vultures"];
-const logos={
-"Sharks":"https://cdn-icons-png.flaticon.com/512/616/616544.png",
-"Wolves":"https://cdn-icons-png.flaticon.com/512/616/616404.png",
-"Falcons":"https://cdn-icons-png.flaticon.com/512/616/616486.png",
-"Leopards":"https://cdn-icons-png.flaticon.com/512/616/616489.png",
-"Dragons":"https://cdn-icons-png.flaticon.com/512/616/616494.png",
-"Bison":"https://cdn-icons-png.flaticon.com/512/616/616433.png",
-"Cobras":"https://cdn-icons-png.flaticon.com/512/616/616429.png",
-"Stallions":"https://cdn-icons-png.flaticon.com/512/616/616422.png",
-"Scorpions":"https://cdn-icons-png.flaticon.com/512/616/616438.png",
-"Iguanas":"https://cdn-icons-png.flaticon.com/512/616/616496.png",
-"Wildcats":"https://cdn-icons-png.flaticon.com/512/616/616401.png",
-"Vultures":"https://cdn-icons-png.flaticon.com/512/616/616402.png"
-};
-
-// Preload 11 weeks with blank scores
-for(let w=0;w<11;w++){
-let weekMatchups=[];
-for(let i=0;i<teams.length;i+=2){
-weekMatchups.push({home:teams[i],away:teams[i+1],homeScore:0,awayScore:0});
-}
-data.weeks.push(weekMatchups);
-}
-
-// Initialize standings
-teams.forEach(t=>{data.standings.push({division:"",team:t,wins:0,losses:0,logo:logos[t]});});
-// Assign divisions
-["South","South","South","West","West","West","North","North","North","East","East","East"].forEach((div,i)=>data.standings[i].division=div);
-
-// Week selector
-const weekSelect=document.getElementById('weekSelect');
-for(let i=1;i<=11;i++){const opt=document.createElement('option');opt.value=i;opt.textContent='Week '+i;weekSelect.appendChild(opt);}
-weekSelect.addEventListener('change',()=>renderLive(parseInt(weekSelect.value)-1));
-
-// Display functions
-function renderLive(week){const liveContainer=document.getElementById('live-cards');liveContainer.innerHTML='';data.weeks[week].forEach(m=>{const card=document.createElement('div');card.className='card';card.innerHTML=`<img src="${logos[m.home]}" alt="${m.home}">${m.home} ${m.homeScore} - ${m.awayScore} ${m.away}<img src="${logos[m.away]}" alt="${m.away}">`;liveContainer.appendChild(card);});}
-function refreshStandings(){data.standings.forEach(s=>{s.wins=0;s.losses=0;});data.weeks.forEach(wk=>{wk.forEach(m=>{const homeT=data.standings.find(t=>t.team===m.home);const awayT=data.standings.find(t=>t.team===m.away);if(m.homeScore>m.awayScore){homeT.wins++;awayT.losses++;}else if(m.awayScore>m.homeScore){awayT.wins++;homeT.losses++;}});});const container=document.getElementById('standings-container');container.innerHTML='';[...new Set(data.standings.map(s=>s.division))].forEach(div=>{const divData=data.standings.filter(s=>s.division===div);const divTable=document.createElement('div');divTable.className='division-table';divTable.innerHTML=`<h3>${div} Division</h3><table><tr><th>Team</th><th>Wins</th><th>Losses</th><th>Win %</th></tr></table>`;const table=divTable.querySelector('table');divData.forEach(s=>{const tr=document.createElement('tr');const wp=s.wins+s.losses===0?0:(s.wins/(s.wins+s.losses)*100).toFixed(1);tr.innerHTML=`<td><img src="${s.logo}" alt="${s.team}">${s.team}</td><td>${s.wins}</td><td>${s.losses}</td><td>${wp}%</td>`;table.appendChild(tr);});container.appendChild(divTable);});
-function refreshAll(){renderLive(0);refreshStandings();}
-refreshAll();
-
-// Admin
-function unlockAdmin(){const pass=document.getElementById('adminPass').value;if(pass==='shmearsadmin'){document.getElementById('adminPanel').style.display='block';renderAdmin();}else{alert('Wrong password');}}
-function renderAdmin(){const editLive=document.getElementById('editLive');editLive.innerHTML='';let week=parseInt(weekSelect.value)-1;data.weeks[week].forEach((m,i)=>{const div=document.createElement('div');div.innerHTML=`Home:<input type="text" id="home${i}" value="${m.home}"> Score:<input type="number" id="homeScore${i}" value="${m.homeScore}"> Away:<input type="text" id="away${i}" value="${m.away}"> Score:<input type="number" id="awayScore${i}" value="${m.awayScore}">`;editLive.appendChild(div);});document.getElementById('adminUpcoming').value=data.hub.upcoming;document.getElementById('adminDraftResults').value=data.hub.draftResults;document.getElementById('adminPlayers').value=data.players.join("\n");document.getElementById('adminFreeAgents').value=data.freeAgents.join("\n");document.getElementById('adminTransactions').value=data.transactions.join("\n");}
-function generateJSON(){let week=parseInt(weekSelect.value)-1;data.weeks[week].forEach((m,i)=>{m.home=document.getElementById(`home${i}`).value;m.away=document.getElementById(`away${i}`).value;m.homeScore=parseInt(document.getElementById(`homeScore${i}`).value);m.awayScore=parseInt(document.getElementById(`awayScore${i}`).value);});data.hub.upcoming=document.getElementById('adminUpcoming').value;data.hub.draftResults=document.getElementById('adminDraftResults').value;data.players=document.getElementById('adminPlayers').value.split("\n").filter(p=>p);data.freeAgents=document.getElementById('adminFreeAgents').value.split("\n").filter(f=>f);data.transactions=document.getElementById('adminTransactions').value.split("\n").filter(t=>t);refreshAll();document.getElementById('jsonOutput').textContent=JSON.stringify(data,null,2);}
 </script>
-
 </body>
 </html>
