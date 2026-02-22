@@ -31,7 +31,7 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 .week-select {margin-bottom:15px;padding:5px;border-radius:6px;border:none;background:#222;color:#fff;}
 .admin-section{margin-bottom:15px;}
 .admin-row{margin:5px 0;}
-.transaction-row{display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+.transaction-row{display:flex;gap:8px;align-items:center;margin-bottom:5px;}
 </style>
 </head>
 <body>
@@ -57,8 +57,6 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 <section id="home" class="active">
 <h2>Welcome to Shmears Draft League</h2>
 <p><strong>Opening Day: March 26, 2026</strong></p>
-<label>Select Season: </label>
-<select id="seasonSelect"><option value="1">Season 1</option></select>
 <p>Use the navigation above to explore each section.</p>
 </section>
 
@@ -127,7 +125,7 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 <button onclick="unlockAdmin()">Unlock Admin</button>
 
 <div id="adminPanel" style="display:none;">
-<h3>Edit Live Matchups by Week</h3>
+<h3>Edit Live Matchups</h3>
 <label>Select Week:</label>
 <select id="adminWeekSelect"></select>
 <div id="editLive"></div>
@@ -159,7 +157,6 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 
 <script>
 document.addEventListener('DOMContentLoaded', function(){
-  // Navigation
   const navLinks=document.querySelectorAll('nav a');
   navLinks.forEach(link=>link.addEventListener('click',()=>{
     navLinks.forEach(l=>l.classList.remove('active'));
@@ -169,10 +166,18 @@ document.addEventListener('DOMContentLoaded', function(){
     if(link.dataset.section==='admin') renderAdmin();
   }));
 
-  // Teams & colors
   const teams=["Sharks","Wolves","Falcons","Leopards","Dragons","Bison","Cobras","Stallions","Scorpions","Iguanas","Wildcats","Vultures"];
-  const colors={"Sharks":"#1CA9C9","Wolves":"#6E6E6E","Falcons":"#D32F2F","Leopards":"#FBC02D","Dragons":"#388E3C","Bison":"#8D6E63","Cobras":"#7B1FA2","Stallions":"#F57C00","Scorpions":"#212121","Iguanas":"#C0CA33","Wildcats":"#1976D2","Vultures":"#424242"};
-  const divisions={"South":["Sharks","Wolves","Falcons"],"West":["Leopards","Dragons","Bison"],"North":["Cobras","Stallions","Scorpions"],"East":["Iguanas","Wildcats","Vultures"]};
+  const colors={
+    "Sharks":"#1CA9C9","Wolves":"#6E6E6E","Falcons":"#D32F2F","Leopards":"#FBC02D",
+    "Dragons":"#388E3C","Bison":"#8D6E63","Cobras":"#7B1FA2","Stallions":"#F57C00",
+    "Scorpions":"#212121","Iguanas":"#C0CA33","Wildcats":"#1976D2","Vultures":"#424242"
+  };
+  const divisions={
+    "South":["Sharks","Wolves","Falcons"],
+    "West":["Leopards","Dragons","Bison"],
+    "North":["Cobras","Stallions","Scorpions"],
+    "East":["Iguanas","Wildcats","Vultures"]
+  };
 
   function renderTeams(){
     for(const div in divisions){
@@ -186,53 +191,55 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   renderTeams();
 
-  // Initialize storage
-  if(!localStorage.getItem('leagueData')){
-    const data={weeks:[],players:[],freeAgents:[],transactions:[],draftPool:[],upcoming:[],draftResults:[]};
-    for(let i=0;i<11;i++){data.weeks.push(teams.map((t,j)=>({home:t,away:teams[(j+6)%12],homeScore:0,awayScore:0})))}
-    localStorage.setItem('leagueData',JSON.stringify(data));
-  }
+  // Round-robin 12 teams, 11 weeks, 6 matchups each
+  const schedule=[
+    [["Sharks","Wolves"],["Falcons","Leopards"],["Dragons","Bison"],["Cobras","Stallions"],["Scorpions","Iguanas"],["Wildcats","Vultures"]],
+    [["Sharks","Falcons"],["Wolves","Dragons"],["Leopards","Bison"],["Cobras","Scorpions"],["Stallions","Wildcats"],["Iguanas","Vultures"]],
+    [["Sharks","Leopards"],["Wolves","Bison"],["Falcons","Dragons"],["Cobras","Wildcats"],["Stallions","Vultures"],["Scorpions","Iguanas"]],
+    [["Sharks","Dragons"],["Wolves","Falcons"],["Leopards","Bison"],["Cobras","Vultures"],["Stallions","Iguanas"],["Scorpions","Wildcats"]],
+    [["Sharks","Bison"],["Wolves","Leopards"],["Falcons","Dragons"],["Cobras","Iguanas"],["Stallions","Wildcats"],["Scorpions","Vultures"]],
+    [["Sharks","Cobras"],["Wolves","Stallions"],["Falcons","Scorpions"],["Leopards","Iguanas"],["Dragons","Wildcats"],["Bison","Vultures"]],
+    [["Sharks","Stallions"],["Wolves","Cobras"],["Falcons","Vultures"],["Leopards","Wildcats"],["Dragons","Iguanas"],["Bison","Scorpions"]],
+    [["Sharks","Scorpions"],["Wolves","Iguanas"],["Falcons","Cobras"],["Leopards","Bison"],["Dragons","Vultures"],["Stallions","Wildcats"]],
+    [["Sharks","Iguanas"],["Wolves","Scorpions"],["Falcons","Wildcats"],["Leopards","Dragons"],["Bison","Cobras"],["Stallions","Vultures"]],
+    [["Sharks","Wildcats"],["Wolves","Vultures"],["Falcons","Iguanas"],["Leopards","Cobras"],["Dragons","Stallions"],["Bison","Scorpions"]],
+    [["Sharks","Vultures"],["Wolves","Wildcats"],["Falcons","Stallions"],["Leopards","Iguanas"],["Dragons","Cobras"],["Bison","Scorpions"]]
+  ];
 
-  let leagueData=JSON.parse(localStorage.getItem('leagueData'));
+  let weeks=schedule.map(week=>week.map(m=>({home:m[0],away:m[1],homeScore:0,awayScore:0})));
+  let standings=teams.map((t,i)=>{ let div=["South","South","South","West","West","West","North","North","North","East","East","East"][i]; return {team:t,division:div,wins:0,losses:0};});
 
   const weekSelect=document.getElementById('weekSelect');
   const adminWeekSelect=document.getElementById('adminWeekSelect');
-  for(let i=1;i<=11;i++){
-    let opt=document.createElement('option'); opt.value=i; opt.textContent='Week '+i;
-    weekSelect.appendChild(opt); adminWeekSelect.appendChild(opt);
-  }
+  for(let i=1;i<=11;i++){let opt=document.createElement('option');opt.value=i;opt.textContent='Week '+i;weekSelect.appendChild(opt);adminWeekSelect.appendChild(opt);}
+  weekSelect.addEventListener('change',()=>renderLive(parseInt(weekSelect.value)-1));
+  adminWeekSelect.addEventListener('change',()=>renderAdmin());
 
   function renderLive(week){
     const liveContainer=document.getElementById('live-cards'); liveContainer.innerHTML='';
-    leagueData.weeks[week].forEach(m=>{
-      const card=document.createElement('div'); card.className='card'; card.style.background=colors[m.home]; 
-      card.textContent=`${m.home} ${m.homeScore} - ${m.awayScore} ${m.away}`;
+    weeks[week].forEach(m=>{
+      const card=document.createElement('div'); card.className='card'; card.style.background=colors[m.home]; card.textContent=`${m.home} ${m.homeScore} - ${m.awayScore} ${m.away}`;
       liveContainer.appendChild(card);
     });
   }
 
-  function renderStandings(){
-    const standings=teams.map(t=>{
-      let wins=0,losses=0;
-      leagueData.weeks.forEach(week=>week.forEach(m=>{
-        if(m.home===t && m.homeScore>m.awayScore) wins++;
-        else if(m.away===t && m.awayScore>m.homeScore) wins++;
-        if(m.home===t && m.homeScore<m.awayScore) losses++;
-        else if(m.away===t && m.awayScore<m.homeScore) losses++;
-      }));
-      let division=Object.keys(divisions).find(d=>divisions[d].includes(t));
-      return {team:t,division:division,wins:wins,losses:losses};
-    });
-
+  function refreshStandings(){
+    standings.forEach(s=>{s.wins=0;s.losses=0;});
+    weeks.forEach(wk=>{wk.forEach(m=>{
+      const h=standings.find(t=>t.team===m.home);
+      const a=standings.find(t=>t.team===m.away);
+      if(m.homeScore>m.awayScore){h.wins++;a.losses++;}
+      else if(m.awayScore>m.homeScore){a.wins++;h.losses++;}
+    });});
     const container=document.getElementById('standings-container'); container.innerHTML='';
-    Object.keys(divisions).forEach(div=>{
+    [...new Set(standings.map(s=>s.division))].forEach(div=>{
       const divData=standings.filter(s=>s.division===div);
       const divTable=document.createElement('div'); divTable.className='division-table';
       divTable.innerHTML=`<h3>${div} Division</h3><table><tr><th>Team</th><th>Wins</th><th>Losses</th><th>Win %</th></tr></table>`;
       const table=divTable.querySelector('table');
       divData.forEach(s=>{
+        const wp=s.wins+s.losses===0?0:(s.wins/(s.wins+s.losses)*100).toFixed(1);
         const tr=document.createElement('tr');
-        const wp=s.wins+s.losses===0?0:((s.wins/(s.wins+s.losses))*100).toFixed(1);
         tr.innerHTML=`<td style="background:${colors[s.team]};font-weight:bold;">${s.team}</td><td>${s.wins}</td><td>${s.losses}</td><td>${wp}%</td>`;
         table.appendChild(tr);
       });
@@ -240,93 +247,107 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   }
 
-  function renderPlayers(){ 
-    const div=document.getElementById('playersList'); div.innerHTML=''; leagueData.players.forEach(p=>{const c=document.createElement('div');c.className='card';c.textContent=p;c.style.background='#555'; div.appendChild(c);}); 
-    const freeDiv=document.getElementById('freeAgentsList'); freeDiv.innerHTML=''; leagueData.freeAgents.forEach(p=>{const c=document.createElement('div');c.className='card';c.textContent=p;c.style.background='#555'; freeDiv.appendChild(c);}); 
-    const draftDiv=document.getElementById('draftPoolList'); draftDiv.innerHTML=''; leagueData.draftPool.forEach(p=>{const c=document.createElement('div');c.className='card';c.textContent=p;c.style.background='#555'; draftDiv.appendChild(c);});
-    const transDiv=document.getElementById('transactionsList'); transDiv.innerHTML=''; leagueData.transactions.forEach(t=>{const c=document.createElement('div');c.textContent=`${t.type}: ${t.player} -> ${t.team}`; c.className='card'; c.style.background='#555'; transDiv.appendChild(c);});
-    const upDiv=document.getElementById('upcomingGames'); upDiv.innerHTML=''; leagueData.upcoming.forEach(g=>{const c=document.createElement('div');c.className='card';c.textContent=g;upDiv.appendChild(c);});
-    const drDiv=document.getElementById('draftResults'); drDiv.innerHTML=''; leagueData.draftResults.forEach(g=>{const c=document.createElement('div');c.className='card';c.textContent=g;drDiv.appendChild(c);});
-  }
+  renderLive(0); refreshStandings();
 
-  renderLive(0); renderStandings(); renderPlayers();
-
-  weekSelect.value=1; adminWeekSelect.value=1;
-
-  weekSelect.addEventListener('change',()=>renderLive(parseInt(weekSelect.value)-1));
-  adminWeekSelect.addEventListener('change',()=>renderAdmin());
-
+  // Admin
   window.unlockAdmin=function(){
     if(document.getElementById('adminPass').value==='jaw'){
       document.getElementById('adminPanel').style.display='block'; renderAdmin();
     } else alert('Wrong password');
   }
 
+  // Transactions array
+  const transactions=[];
   window.addTransactionRow=function(){
     const trDiv=document.createElement('div'); trDiv.className='admin-row transaction-row';
-    trDiv.innerHTML=`<select class="transType"><option value="Waiver">Waiver</option><option value="Trade">Trade</option><option value="Drop">Drop</option></select> Player: <input type="text" class="transPlayer"> Team: <input type="text" class="transTeam"> <button onclick="this.parentNode.remove()">Remove</button>`;
+    trDiv.innerHTML=`<select class="transType">
+      <option value="Waiver">Waiver</option>
+      <option value="Trade">Trade</option>
+      <option value="Drop">Drop</option>
+    </select> Player: <input type="text" class="transPlayer"> Team: <input type="text" class="transTeam"> <button onclick="this.parentNode.remove()">Remove</button>`;
     document.getElementById('transactionRows').appendChild(trDiv);
   }
 
   function renderAdmin(){
     const week=parseInt(adminWeekSelect.value)-1;
     const editLive=document.getElementById('editLive'); editLive.innerHTML='';
-    leagueData.weeks[week].forEach((m,i)=>{
+    weeks[week].forEach((m,i)=>{
       const div=document.createElement('div'); div.className='admin-row';
       div.innerHTML=`Home: <input type="text" id="home${i}" value="${m.home}"> Score: <input type="number" id="homeScore${i}" value="${m.homeScore}"> Away: <input type="text" id="away${i}" value="${m.away}"> Score: <input type="number" id="awayScore${i}" value="${m.awayScore}">`;
       editLive.appendChild(div);
     });
 
-    document.getElementById('adminUpcoming').value=leagueData.upcoming.join("\n");
-    document.getElementById('adminDraftResults').value=leagueData.draftResults.join("\n");
-    document.getElementById('adminPlayers').value=leagueData.players.join("\n");
-    document.getElementById('adminFreeAgents').value=leagueData.freeAgents.join("\n");
-    document.getElementById('adminDraftPool').value=leagueData.draftPool.join("\n");
+    document.getElementById('adminUpcoming').value=[...document.getElementById('upcomingGames').children].map(c=>c.textContent).join("\n");
+    document.getElementById('adminDraftResults').value=[...document.getElementById('draftResults').children].map(c=>c.textContent).join("\n");
+    document.getElementById('adminPlayers').value=[...document.getElementById('playersList').children].map(c=>c.textContent).join("\n");
+    document.getElementById('adminFreeAgents').value=[...document.getElementById('freeAgentsList').children].map(c=>c.textContent).join("\n");
 
-    const transRows=document.getElementById('transactionRows'); transRows.innerHTML='';
-    leagueData.transactions.forEach(t=>{
+    // Render Transactions
+    document.getElementById('transactionRows').innerHTML='';
+    transactions.forEach(t=>{
       const trDiv=document.createElement('div'); trDiv.className='admin-row transaction-row';
-      trDiv.innerHTML=`<select class="transType"><option value="Waiver"${t.type==='Waiver'?' selected':''}>Waiver</option><option value="Trade"${t.type==='Trade'?' selected':''}>Trade</option><option value="Drop"${t.type==='Drop'?' selected':''}>Drop</option></select> Player: <input type="text" class="transPlayer" value="${t.player}"> Team: <input type="text" class="transTeam" value="${t.team}"> <button onclick="this.parentNode.remove()">Remove</button>`;
-      transRows.appendChild(trDiv);
+      trDiv.innerHTML=`<select class="transType">
+        <option value="Waiver"${t.type==='Waiver'?' selected':''}>Waiver</option>
+        <option value="Trade"${t.type==='Trade'?' selected':''}>Trade</option>
+        <option value="Drop"${t.type==='Drop'?' selected':''}>Drop</option>
+      </select> Player: <input type="text" class="transPlayer" value="${t.player}"> Team: <input type="text" class="transTeam" value="${t.team}"> <button onclick="this.parentNode.remove()">Remove</button>`;
+      document.getElementById('transactionRows').appendChild(trDiv);
     });
+
+    // Render Draft Pool
+    document.getElementById('adminDraftPool').value=[...document.getElementById('draftPoolList').children].map(c=>c.textContent).join("\n");
   }
 
   window.saveAdmin=function(){
     const week=parseInt(adminWeekSelect.value)-1;
     // Save Live
-    leagueData.weeks[week].forEach((m,i)=>{
+    weeks[week].forEach((m,i)=>{
       m.home=document.getElementById(`home${i}`).value;
       m.away=document.getElementById(`away${i}`).value;
       m.homeScore=parseInt(document.getElementById(`homeScore${i}`).value)||0;
       m.awayScore=parseInt(document.getElementById(`awayScore${i}`).value)||0;
     });
+    renderLive(week);
+    refreshStandings();
 
     // Save Hub
-    leagueData.upcoming=document.getElementById('adminUpcoming').value.split("\n").filter(l=>l.trim()!=="");
-    leagueData.draftResults=document.getElementById('adminDraftResults').value.split("\n").filter(l=>l.trim()!=="");
+    const upGames=document.getElementById('adminUpcoming').value.split("\n").filter(l=>l.trim()!=="");
+    const draftRes=document.getElementById('adminDraftResults').value.split("\n").filter(l=>l.trim()!=="");
+    const upcomingGamesDiv=document.getElementById('upcomingGames'); upcomingGamesDiv.innerHTML=''; upGames.forEach(g=>{const c=document.createElement('div');c.className='card';c.textContent=g;upcomingGamesDiv.appendChild(c);});
+    const draftResultsDiv=document.getElementById('draftResults'); draftResultsDiv.innerHTML=''; draftRes.forEach(g=>{const c=document.createElement('div');c.className='card';c.textContent=g;draftResultsDiv.appendChild(c);});
 
-    // Save Players & Free Agents & Draft Pool
-    leagueData.players=document.getElementById('adminPlayers').value.split("\n").filter(l=>l.trim()!=="");
-    leagueData.freeAgents=document.getElementById('adminFreeAgents').value.split("\n").filter(l=>l.trim()!=="");
-    leagueData.draftPool=document.getElementById('adminDraftPool').value.split("\n").filter(l=>l.trim()!=="");
+    // Save Players
+    const players=document.getElementById('adminPlayers').value.split("\n").filter(l=>l.trim()!=="");
+    const playersListDiv=document.getElementById('playersList'); playersListDiv.innerHTML=''; players.forEach(p=>{const c=document.createElement('div');c.className='card';c.textContent=p;c.style.background='#555';playersListDiv.appendChild(c);});
+
+    // Save Free Agents
+    const freeAgents=document.getElementById('adminFreeAgents').value.split("\n").filter(l=>l.trim()!=="");
+    const freeAgentsDiv=document.getElementById('freeAgentsList'); freeAgentsDiv.innerHTML=''; freeAgents.forEach(p=>{const c=document.createElement('div');c.className='card';c.textContent=p;c.style.background='#555';freeAgentsDiv.appendChild(c);});
 
     // Save Transactions
-    const transRows=document.querySelectorAll('.transaction-row');
-    leagueData.transactions=[];
+    const transRows=document.querySelectorAll('.transaction-row'); transactions.length=0;
     transRows.forEach(r=>{
-      leagueData.transactions.push({
+      transactions.push({
         type:r.querySelector('.transType').value,
         player:r.querySelector('.transPlayer').value,
         team:r.querySelector('.transTeam').value
       });
     });
+    const transDiv=document.getElementById('transactionsList'); transDiv.innerHTML='';
+    transactions.forEach(t=>{const c=document.createElement('div');c.textContent=`${t.type}: ${t.player} -> ${t.team}`;c.className='card';c.style.background='#555';transDiv.appendChild(c);});
 
-    localStorage.setItem('leagueData',JSON.stringify(leagueData));
-    renderLive(week); renderStandings(); renderPlayers();
+    // Save Draft Pool
+    const draftPool=document.getElementById('adminDraftPool').value.split("\n").filter(l=>l.trim()!=="");
+    const draftPoolDiv=document.getElementById('draftPoolList'); draftPoolDiv.innerHTML=''; draftPool.forEach(p=>{const c=document.createElement('div');c.className='card';c.textContent=p;c.style.background='#555';draftPoolDiv.appendChild(c);});
+
     alert('League Updated!');
   }
 
+  // Set default week
+  weekSelect.value=1; adminWeekSelect.value=1; renderLive(0);
+
 });
 </script>
+
 </body>
 </html>
