@@ -4,13 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shmears Draft League</title>
-<link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700&display=swap" rel="stylesheet">
 <style>
-body {margin:0;font-family:'Anton',sans-serif;background:#0c0c0c;color:#fff;}
+body {margin:0;font-family:'Roboto Slab', serif;background:#0c0c0c;color:#fff;}
 nav {position:sticky;top:0;background:#111;display:flex;justify-content:center;gap:15px;padding:15px 0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,0.5);}
-nav a {color:#fff;text-decoration:none;font-weight:bold;padding:8px 15px;border-radius:8px;transition:0.3s;}
-nav a:hover {background:linear-gradient(90deg,#ff007f,#00bfff);color:#fff;}
-section {padding:60px 20px;text-align:center;}
+nav a {color:#fff;text-decoration:none;font-weight:bold;padding:8px 15px;border-radius:8px;transition:0.3s; cursor:pointer;}
+nav a.active {background:linear-gradient(90deg,#ff007f,#00bfff);}
+section {padding:60px 20px;text-align:center;display:none;}
+section.active {display:block;}
 h1,h2 {margin-bottom:20px;text-shadow:0 0 10px #ff007f,0 0 20px #00bfff;}
 .card-container {display:flex;flex-wrap:wrap;justify-content:center;gap:20px;margin-top:20px;}
 .card {background:#1a1a1a;padding:20px;border-radius:12px;width:220px;box-shadow:0 0 15px rgba(255,0,127,0.3);}
@@ -25,15 +26,22 @@ input[type=number],input[type=text],select{width:80px;margin:2px;}
 </head>
 <body>
 
+<!-- Logo -->
+<div style="text-align:center; margin:20px;">
+  <img src="shmears_logo.png" alt="Shmears Draft League Logo" style="width:250px; height:auto;">
+</div>
+
+<!-- Navigation -->
 <nav>
-<a href="#home">Home</a>
-<a href="#live">Live</a>
-<a href="#teams">Teams</a>
-<a href="#standings">Standings</a>
-<a href="#adminSection">Admin</a>
+<a class="active" data-section="home">Home</a>
+<a data-section="live">Live</a>
+<a data-section="teams">Teams</a>
+<a data-section="standings">Standings</a>
+<a data-section="adminSection">Admin</a>
 </nav>
 
-<section id="home">
+<!-- Sections -->
+<section id="home" class="active">
 <h1>🏆 Shmears Draft League</h1>
 <p>12 elite teams. Live scoring. Fully interactive.</p>
 </section>
@@ -74,6 +82,21 @@ input[type=number],input[type=text],select{width:80px;margin:2px;}
 <footer>© 2026 Shmears Draft League</footer>
 
 <script>
+// --- Navigation logic ---
+const navLinks = document.querySelectorAll('nav a');
+navLinks.forEach(link=>{
+  link.addEventListener('click', ()=>{
+    // Remove active from all links
+    navLinks.forEach(l=>l.classList.remove('active'));
+    link.classList.add('active');
+    // Hide all sections
+    document.querySelectorAll('section').forEach(sec=>sec.classList.remove('active'));
+    // Show selected section
+    document.getElementById(link.dataset.section).classList.add('active');
+  });
+});
+
+// --- Data ---
 let data = {
   teams:[
     {name:"Sharks",score:0},{name:"Wolves",score:0},{name:"Falcons",score:0},{name:"Leopards",score:0},
@@ -98,7 +121,7 @@ let data = {
   ]
 };
 
-// Display Functions
+// --- Display functions ---
 function refreshDisplay(){
   const teamContainer=document.getElementById('team-cards');teamContainer.innerHTML='';
   data.teams.forEach((team)=>{const card=document.createElement('div');card.className='card';card.textContent=`${team.name} 🏆 Score: ${team.score}`;teamContainer.appendChild(card);});
@@ -112,10 +135,11 @@ function refreshDisplay(){
 }
 refreshDisplay();
 
-// Admin Functions
+// --- Admin ---
 function unlockAdmin(){
   const pass=document.getElementById('adminPass').value;
-  if(pass==='shmearsadmin'){document.getElementById('adminPanel').style.display='block';renderAdmin();}else{alert('Wrong password');}
+  if(pass==='shmearsadmin'){document.getElementById('adminPanel').style.display='block';renderAdmin();}
+  else{alert('Wrong password');}
 }
 
 function renderAdmin(){
