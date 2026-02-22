@@ -144,134 +144,172 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 <footer>© 2026 Shmears Draft League</footer>
 
 <script>
-document.addEventListener('DOMContentLoaded', function(){
-  const navLinks=document.querySelectorAll('nav a');
-  navLinks.forEach(link=>link.addEventListener('click',()=>{
-    navLinks.forEach(l=>l.classList.remove('active'));
-    link.classList.add('active');
-    document.querySelectorAll('section').forEach(sec=>sec.classList.remove('active'));
-    document.getElementById(link.dataset.section).classList.add('active');
-    if(link.dataset.section==='admin') renderAdmin();
-  }));
 
-  const teams=["Sharks","Wolves","Falcons","Leopards","Dragons","Bison","Cobras","Stallions","Scorpions","Iguanas","Wildcats","Vultures"];
-  const colors={
-    "Sharks":"#1CA9C9","Wolves":"#6E6E6E","Falcons":"#D32F2F","Leopards":"#FBC02D",
-    "Dragons":"#388E3C","Bison":"#8D6E63","Cobras":"#7B1FA2","Stallions":"#F57C00",
-    "Scorpions":"#212121","Iguanas":"#C0CA33","Wildcats":"#1976D2","Vultures":"#424242"
-  };
-  const divisions={
-    "South":["Sharks","Wolves","Falcons"],
-    "West":["Leopards","Dragons","Bison"],
-    "North":["Cobras","Stallions","Scorpions"],
-    "East":["Iguanas","Wildcats","Vultures"]
-  };
+const ADMIN_PASSWORD = "jaw";
 
-  function renderTeams(){
-    for(const div in divisions){
-      const container=document.getElementById(div.toLowerCase()+"Teams");
-      container.innerHTML='';
-      divisions[div].forEach(t=>{
-        const card=document.createElement('div'); card.className='card'; card.style.background=colors[t]; card.textContent=t;
-        container.appendChild(card);
-      });
-    }
-  }
-  renderTeams();
+const teams = ["Sharks","Wolves","Falcons","Leopards","Dragons","Bison","Cobras","Stallions","Scorpions","Iguanas","Wildcats","Vultures"];
 
-  // Proper 11-week round-robin schedule for 12 teams
-  const schedule=[
-    [["Sharks","Wolves"],["Falcons","Leopards"],["Dragons","Bison"],["Cobras","Stallions"],["Scorpions","Iguanas"],["Wildcats","Vultures"]],
-    [["Sharks","Falcons"],["Wolves","Dragons"],["Leopards","Bison"],["Cobras","Scorpions"],["Stallions","Wildcats"],["Iguanas","Vultures"]],
-    [["Sharks","Leopards"],["Wolves","Bison"],["Falcons","Dragons"],["Cobras","Wildcats"],["Stallions","Vultures"],["Scorpions","Iguanas"]],
-    [["Sharks","Dragons"],["Wolves","Falcons"],["Leopards","Bison"],["Cobras","Vultures"],["Stallions","Iguanas"],["Scorpions","Wildcats"]],
-    [["Sharks","Bison"],["Wolves","Leopards"],["Falcons","Dragons"],["Cobras","Iguanas"],["Stallions","Wildcats"],["Scorpions","Vultures"]],
-    [["Sharks","Cobras"],["Wolves","Stallions"],["Falcons","Scorpions"],["Leopards","Iguanas"],["Dragons","Wildcats"],["Bison","Vultures"]],
-    [["Sharks","Stallions"],["Wolves","Cobras"],["Falcons","Vultures"],["Leopards","Wildcats"],["Dragons","Iguanas"],["Bison","Scorpions"]],
-    [["Sharks","Scorpions"],["Wolves","Iguanas"],["Falcons","Cobras"],["Leopards","Bison"],["Dragons","Vultures"],["Stallions","Wildcats"]],
-    [["Sharks","Iguanas"],["Wolves","Scorpions"],["Falcons","Wildcats"],["Leopards","Dragons"],["Bison","Cobras"],["Stallions","Vultures"]],
-    [["Sharks","Wildcats"],["Wolves","Vultures"],["Falcons","Iguanas"],["Leopards","Cobras"],["Dragons","Stallions"],["Bison","Scorpions"]],
-    [["Sharks","Vultures"],["Wolves","Wildcats"],["Falcons","Stallions"],["Leopards","Iguanas"],["Dragons","Cobras"],["Bison","Scorpions"]]
-  ];
+const divisions = {
+South:["Sharks","Wolves","Falcons"],
+West:["Leopards","Dragons","Bison"],
+North:["Cobras","Stallions","Scorpions"],
+East:["Iguanas","Wildcats","Vultures"]
+};
 
-  // Initialize weeks with scores
-  let weeks=schedule.map(week=>week.map(m=>({home:m[0],away:m[1],homeScore:0,awayScore:0})));
+const colors = {
+Sharks:"#1CA9C9", Wolves:"#777", Falcons:"#C62828",
+Leopards:"#FBC02D", Dragons:"#2E7D32", Bison:"#8D6E63",
+Cobras:"#6A1B9A", Stallions:"#EF6C00", Scorpions:"#212121",
+Iguanas:"#AFB42B", Wildcats:"#1565C0", Vultures:"#424242"
+};
 
-  let standings=teams.map((t,i)=>{
-    let div=["South","South","South","West","West","West","North","North","North","East","East","East"][i];
-    return {team:t,division:div,wins:0,losses:0};
-  });
+let weeks = [];
+let standings = [];
 
-  const weekSelect=document.getElementById('weekSelect');
-  for(let i=1;i<=11;i++){let opt=document.createElement('option');opt.value=i;opt.textContent='Week '+i;weekSelect.appendChild(opt);}
-  weekSelect.addEventListener('change',()=>renderLive(parseInt(weekSelect.value)-1));
+/* ---------------- SCHEDULE GENERATION ---------------- */
 
-  function renderLive(week){
-    const liveContainer=document.getElementById('live-cards'); liveContainer.innerHTML='';
-    weeks[week].forEach(m=>{
-      const card=document.createElement('div'); card.className='card';
-      card.style.background=colors[m.home]; card.textContent=`${m.home} ${m.homeScore} - ${m.awayScore} ${m.away}`;
-      liveContainer.appendChild(card);
-    });
-  }
+function generateSchedule(){
+let arr=[...teams];
+for(let w=0; w<11; w++){
+let week=[];
+for(let i=0;i<6;i++){
+week.push({home:arr[i],away:arr[11-i],homeScore:0,awayScore:0});
+}
+arr.splice(1,0,arr.pop());
+weeks.push(week);
+}
+}
 
-  function refreshStandings(){
-    standings.forEach(s=>{s.wins=0;s.losses=0;});
-    weeks.forEach(wk=>{wk.forEach(m=>{
-      const h=standings.find(t=>t.team===m.home);
-      const a=standings.find(t=>t.team===m.away);
-      if(m.homeScore>m.awayScore){h.wins++;a.losses++;}
-      else if(m.awayScore>m.homeScore){a.wins++;h.losses++;}
-    });});
-    const container=document.getElementById('standings-container'); container.innerHTML='';
-    [...new Set(standings.map(s=>s.division))].forEach(div=>{
-      const divData=standings.filter(s=>s.division===div);
-      const divTable=document.createElement('div'); divTable.className='division-table';
-      divTable.innerHTML=`<h3>${div} Division</h3><table><tr><th>Team</th><th>Wins</th><th>Losses</th><th>Win %</th></tr></table>`;
-      const table=divTable.querySelector('table');
-      divData.forEach(s=>{
-        const wp=s.wins+s.losses===0?0:(s.wins/(s.wins+s.losses)*100).toFixed(1);
-        const tr=document.createElement('tr');
-        tr.innerHTML=`<td style="background:${colors[s.team]};font-weight:bold;">${s.team}</td><td>${s.wins}</td><td>${s.losses}</td><td>${wp}%</td>`;
-        table.appendChild(tr);
-      });
-      container.appendChild(divTable);
-    });
-  }
+/* ---------------- STANDINGS ---------------- */
 
-  renderLive(0); refreshStandings();
-
-  window.unlockAdmin=function(){
-    if(document.getElementById('adminPass').value==='shmearsadmin'){
-      document.getElementById('adminPanel').style.display='block'; renderAdmin();
-    } else alert('Wrong password');
-  }
-
-  function renderAdmin(){
-    const editLive=document.getElementById('editLive'); editLive.innerHTML='';
-    let week=parseInt(weekSelect.value)-1;
-    weeks[week].forEach((m,i)=>{
-      const div=document.createElement('div');
-      div.innerHTML=`Home:<input type="text" id="home${i}" value="${m.home}"> Score:<input type="number" id="homeScore${i}" value="${m.homeScore}"> Away:<input type="text" id="away${i}" value="${m.away}"> Score:<input type="number" id="awayScore${i}" value="${m.awayScore}">`;
-      editLive.appendChild(div);
-    });
-    document.getElementById('adminUpcoming').value=document.getElementById('upcomingGames').innerHTML;
-    document.getElementById('adminDraftResults').value=document.getElementById('draftResults').innerHTML;
-  }
-
-  window.saveAdmin=function(){
-    let week=parseInt(weekSelect.value)-1;
-    weeks[week].forEach((m,i)=>{
-      m.home=document.getElementById(`home${i}`).value;
-      m.away=document.getElementById(`away${i}`).value;
-      m.homeScore=parseInt(document.getElementById(`homeScore${i}`).value);
-      m.awayScore=parseInt(document.getElementById(`awayScore${i}`).value);
-    });
-    renderLive(week); refreshStandings();
-    alert('Saved!');
-  }
-
+function generateStandings(){
+teams.forEach(t=>{
+let div=Object.keys(divisions).find(d=>divisions[d].includes(t));
+standings.push({team:t,division:div,w:0,l:0});
 });
+}
+
+function calculateStandings(){
+standings.forEach(s=>{s.w=0;s.l=0});
+weeks.forEach(w=>{
+w.forEach(g=>{
+let h=standings.find(s=>s.team===g.home);
+let a=standings.find(s=>s.team===g.away);
+if(g.homeScore>g.awayScore){h.w++;a.l++;}
+if(g.awayScore>g.homeScore){a.w++;h.l++;}
+});
+});
+renderStandings();
+}
+
+function renderStandings(){
+let html="";
+for(let div in divisions){
+html+=`<h3>${div} Division</h3>
+<table>
+<tr><th>Team</th><th>W</th><th>L</th><th>%</th></tr>`;
+standings.filter(s=>s.division===div).forEach(s=>{
+let pct=s.w+s.l===0?0:(s.w/(s.w+s.l)).toFixed(3);
+html+=`<tr>
+<td style="background:${colors[s.team]}">${s.team}</td>
+<td>${s.w}</td>
+<td>${s.l}</td>
+<td>${pct}</td>
+</tr>`;
+});
+html+="</table>";
+}
+document.getElementById("standingsArea").innerHTML=html;
+}
+
+/* ---------------- LIVE ---------------- */
+
+function renderLive(){
+let week = parseInt(document.getElementById("weekSelect").value) - 1;
+let html="";
+weeks[week].forEach((g,i)=>{
+let bg = i%2 ? "#1c1c1c" : "#2a2a2a";
+html+=`<div class="card" style="background:${bg}">
+<span style="color:${colors[g.home]}">${g.home}</span> ${g.homeScore}
+ -
+${g.awayScore}
+<span style="color:${colors[g.away]}">${g.away}</span>
+</div>`;
+});
+document.getElementById("liveArea").innerHTML = html;
+}
+
+/* ---------------- ADMIN ---------------- */
+
+function unlock(){
+if(document.getElementById("adminPass").value === ADMIN_PASSWORD){
+document.getElementById("adminPanel").style.display = "block";
+renderAdmin(); // render week immediately
+} else {
+alert("Wrong password");
+}
+}
+
+function renderAdmin(){
+let week = parseInt(document.getElementById("adminWeek").value) - 1;
+let html="";
+weeks[week].forEach((g,i)=>{
+html+=`
+${g.home}
+<input type="number" id="h${i}" value="${g.homeScore}">
+${g.away}
+<input type="number" id="a${i}" value="${g.awayScore}">
+<br>`;
+});
+document.getElementById("adminScores").innerHTML = html;
+}
+
+function saveAll(){
+let week = parseInt(document.getElementById("adminWeek").value) - 1;
+
+weeks[week].forEach((g,i)=>{
+g.homeScore = parseInt(document.getElementById("h"+i).value) || 0;
+g.awayScore = parseInt(document.getElementById("a"+i).value) || 0;
+});
+
+calculateStandings();
+renderLive();
+alert("League Updated");
+}
+
+/* ---------------- NAV ---------------- */
+
+function showTab(id){
+document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+}
+
+/* ---------------- INIT ---------------- */
+
+function init(){
+generateSchedule();
+generateStandings();
+
+const weekSelect = document.getElementById("weekSelect");
+const adminWeek = document.getElementById("adminWeek");
+
+for(let i=1;i<=11;i++){
+weekSelect.innerHTML += `<option value="${i}">Week ${i}</option>`;
+adminWeek.innerHTML += `<option value="${i}">Week ${i}</option>`;
+}
+
+let start=new Date(2026,2,26);
+let today=new Date();
+let diff=Math.floor((today-start)/(1000*60*60*24));
+let current = diff>=0 ? Math.min(diff+1,11) : 1;
+
+weekSelect.value=current;
+adminWeek.value=current;
+
+renderLive();
+calculateStandings();
+}
+
+init();
+
 </script>
-</body>
-</html>
