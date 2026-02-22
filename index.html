@@ -75,16 +75,12 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 
 <section id="teams">
 <h2>Teams</h2>
-
 <h3>South Division</h3>
 <div class="card-container" id="southTeams"></div>
-
 <h3>West Division</h3>
 <div class="card-container" id="westTeams"></div>
-
 <h3>North Division</h3>
 <div class="card-container" id="northTeams"></div>
-
 <h3>East Division</h3>
 <div class="card-container" id="eastTeams"></div>
 </section>
@@ -149,24 +145,22 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 
 <script>
 document.addEventListener('DOMContentLoaded', function(){
-  const navLinks = document.querySelectorAll('nav a');
-  navLinks.forEach(link=>{
-    link.addEventListener('click',()=>{
-      navLinks.forEach(l=>l.classList.remove('active'));
-      link.classList.add('active');
-      document.querySelectorAll('section').forEach(sec=>sec.classList.remove('active'));
-      document.getElementById(link.dataset.section).classList.add('active');
-      if(link.dataset.section==='admin') renderAdmin();
-    });
-  });
+  const navLinks=document.querySelectorAll('nav a');
+  navLinks.forEach(link=>link.addEventListener('click',()=>{
+    navLinks.forEach(l=>l.classList.remove('active'));
+    link.classList.add('active');
+    document.querySelectorAll('section').forEach(sec=>sec.classList.remove('active'));
+    document.getElementById(link.dataset.section).classList.add('active');
+    if(link.dataset.section==='admin') renderAdmin();
+  }));
 
-  const teams = ["Sharks","Wolves","Falcons","Leopards","Dragons","Bison","Cobras","Stallions","Scorpions","Iguanas","Wildcats","Vultures"];
-  const colors = {
+  const teams=["Sharks","Wolves","Falcons","Leopards","Dragons","Bison","Cobras","Stallions","Scorpions","Iguanas","Wildcats","Vultures"];
+  const colors={
     "Sharks":"#1CA9C9","Wolves":"#6E6E6E","Falcons":"#D32F2F","Leopards":"#FBC02D",
     "Dragons":"#388E3C","Bison":"#8D6E63","Cobras":"#7B1FA2","Stallions":"#F57C00",
     "Scorpions":"#212121","Iguanas":"#C0CA33","Wildcats":"#1976D2","Vultures":"#424242"
   };
-  const divisions = {
+  const divisions={
     "South":["Sharks","Wolves","Falcons"],
     "West":["Leopards","Dragons","Bison"],
     "North":["Cobras","Stallions","Scorpions"],
@@ -175,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
   function renderTeams(){
     for(const div in divisions){
-      const container = document.getElementById(div.toLowerCase()+"Teams");
+      const container=document.getElementById(div.toLowerCase()+"Teams");
       container.innerHTML='';
       divisions[div].forEach(t=>{
         const card=document.createElement('div'); card.className='card'; card.style.background=colors[t]; card.textContent=t;
@@ -185,19 +179,27 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   renderTeams();
 
-  let weeks = [];
+  // Generate round-robin schedule for 12 teams
+  let weeks=[];
   for(let w=0; w<11; w++){
-    let matches = [];
-    for(let i=0;i<teams.length;i+=2){matches.push({home:teams[i],away:teams[i+1],homeScore:0,awayScore:0});}
+    let matches=[];
+    let rotated=[...teams];
+    // rotate array for round-robin pairing
+    let first=rotated[0];
+    rotated.splice(0,1);
+    rotated.push(first);
+    for(let i=0;i<rotated.length;i+=2){
+      if(i+1<rotated.length) matches.push({home:rotated[i],away:rotated[i+1],homeScore:0,awayScore:0});
+    }
     weeks.push(matches);
   }
 
-  let standings = teams.map((t,i)=>{
-    let div = ["South","South","South","West","West","West","North","North","North","East","East","East"][i];
+  let standings=teams.map((t,i)=>{
+    let div=["South","South","South","West","West","West","North","North","North","East","East","East"][i];
     return {team:t,division:div,wins:0,losses:0};
   });
 
-  const weekSelect = document.getElementById('weekSelect');
+  const weekSelect=document.getElementById('weekSelect');
   for(let i=1;i<=11;i++){let opt=document.createElement('option');opt.value=i;opt.textContent='Week '+i;weekSelect.appendChild(opt);}
   weekSelect.addEventListener('change',()=>renderLive(parseInt(weekSelect.value)-1));
 
@@ -268,6 +270,5 @@ document.addEventListener('DOMContentLoaded', function(){
 
 });
 </script>
-
 </body>
 </html>
