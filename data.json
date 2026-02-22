@@ -1,0 +1,34 @@
+{
+  "teams": [
+    {"name": "Sharks", "score": 0},
+    {"name": "Wolves", "score": 0},
+    {"name": "Falcons", "score": 0},
+    {"name": "Leopards", "score": 0},
+    {"name": "Dragons", "score": 0},
+    {"name": "Bison", "score": 0},
+    {"name": "Cobras", "score": 0},
+    {"name": "Stallions", "score": 0},
+    {"name": "Scorpions", "score": 0},
+    {"name": "Vultures", "score": 0},
+    {"name": "Wildcats", "score": 0},
+    {"name": "Iguanas", "score": 0}
+  ],
+  "standings": [
+    {"team": "Sharks", "wins": 0, "losses": 0, "points": 0},
+    {"team": "Wolves", "wins": 0, "losses": 0, "points": 0},
+    {"team": "Falcons", "wins": 0, "losses": 0, "points": 0},
+    {"team": "Leopards", "wins": 0, "losses": 0, "points": 0},
+    {"team": "Dragons", "wins": 0, "losses": 0, "points": 0},
+    {"team": "Bison", "wins": 0, "losses": 0, "points": 0},
+    {"team": "Cobras", "wins": 0, "losses": 0, "points": 0},
+    {"team": "Stallions", "wins": 0, "losses": 0, "points": 0},
+    {"team": "Scorpions", "wins": 0, "losses": 0, "points": 0},
+    {"team": "Vultures", "wins": 0, "losses": 0, "points": 0},
+    {"team": "Wildcats", "wins": 0, "losses": 0, "points": 0},
+    {"team": "Iguanas", "wins": 0, "losses": 0, "points": 0}
+  ],
+  "liveMatchups": [
+    {"home": "Sharks", "away": "Wolves", "homeScore": 0, "awayScore": 0},
+    {"home": "Falcons", "away": "Leopards", "homeScore": 0, "awayScore": 0}
+  ]
+}
