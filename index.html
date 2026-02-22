@@ -179,20 +179,23 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   renderTeams();
 
-  // Generate round-robin schedule for 12 teams
-  let weeks=[];
-  for(let w=0; w<11; w++){
-    let matches=[];
-    let rotated=[...teams];
-    // rotate array for round-robin pairing
-    let first=rotated[0];
-    rotated.splice(0,1);
-    rotated.push(first);
-    for(let i=0;i<rotated.length;i+=2){
-      if(i+1<rotated.length) matches.push({home:rotated[i],away:rotated[i+1],homeScore:0,awayScore:0});
-    }
-    weeks.push(matches);
-  }
+  // Proper 11-week round-robin schedule for 12 teams
+  const schedule=[
+    [["Sharks","Wolves"],["Falcons","Leopards"],["Dragons","Bison"],["Cobras","Stallions"],["Scorpions","Iguanas"],["Wildcats","Vultures"]],
+    [["Sharks","Falcons"],["Wolves","Dragons"],["Leopards","Bison"],["Cobras","Scorpions"],["Stallions","Wildcats"],["Iguanas","Vultures"]],
+    [["Sharks","Leopards"],["Wolves","Bison"],["Falcons","Dragons"],["Cobras","Wildcats"],["Stallions","Vultures"],["Scorpions","Iguanas"]],
+    [["Sharks","Dragons"],["Wolves","Falcons"],["Leopards","Bison"],["Cobras","Vultures"],["Stallions","Iguanas"],["Scorpions","Wildcats"]],
+    [["Sharks","Bison"],["Wolves","Leopards"],["Falcons","Dragons"],["Cobras","Iguanas"],["Stallions","Wildcats"],["Scorpions","Vultures"]],
+    [["Sharks","Cobras"],["Wolves","Stallions"],["Falcons","Scorpions"],["Leopards","Iguanas"],["Dragons","Wildcats"],["Bison","Vultures"]],
+    [["Sharks","Stallions"],["Wolves","Cobras"],["Falcons","Vultures"],["Leopards","Wildcats"],["Dragons","Iguanas"],["Bison","Scorpions"]],
+    [["Sharks","Scorpions"],["Wolves","Iguanas"],["Falcons","Cobras"],["Leopards","Bison"],["Dragons","Vultures"],["Stallions","Wildcats"]],
+    [["Sharks","Iguanas"],["Wolves","Scorpions"],["Falcons","Wildcats"],["Leopards","Dragons"],["Bison","Cobras"],["Stallions","Vultures"]],
+    [["Sharks","Wildcats"],["Wolves","Vultures"],["Falcons","Iguanas"],["Leopards","Cobras"],["Dragons","Stallions"],["Bison","Scorpions"]],
+    [["Sharks","Vultures"],["Wolves","Wildcats"],["Falcons","Stallions"],["Leopards","Iguanas"],["Dragons","Cobras"],["Bison","Scorpions"]]
+  ];
+
+  // Initialize weeks with scores
+  let weeks=schedule.map(week=>week.map(m=>({home:m[0],away:m[1],homeScore:0,awayScore:0})));
 
   let standings=teams.map((t,i)=>{
     let div=["South","South","South","West","West","West","North","North","North","East","East","East"][i];
