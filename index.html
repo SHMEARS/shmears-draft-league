@@ -1,267 +1,277 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shmears Draft League</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Oswald:wght@700&display=swap" rel="stylesheet">
 <style>
-body{margin:0;font-family:Montserrat;background:#0f0f0f;color:#fff}
-header{background:#111;padding:15px;text-align:center;font-size:22px;font-weight:700}
-nav{display:flex;flex-wrap:wrap;justify-content:center;background:#181818}
-nav button{background:none;border:none;color:#fff;padding:10px 14px;cursor:pointer;font-weight:600}
-nav button:hover{background:#333}
-section{display:none;padding:20px;text-align:center}
-.active{display:block}
-.card{padding:10px;margin:8px auto;max-width:500px;border-radius:8px;font-weight:600}
-.division{margin-top:20px}
-table{width:90%;max-width:700px;margin:10px auto;border-collapse:collapse}
-th,td{border:1px solid #333;padding:6px}
-.news{background:#1a1a1a;margin:6px auto;padding:8px;border-radius:6px;max-width:600px;text-align:left}
-select,input,textarea{margin:5px;padding:6px;border-radius:6px;border:none}
-textarea{width:90%;height:80px}
+body {margin:0;font-family:'Montserrat',sans-serif;background:#0c0c0c;color:#fff;}
+header {text-align:center;padding:12px;background:linear-gradient(90deg,#ff007f,#00bfff);}
+header h1 {font-family:'Oswald',sans-serif;font-size:1.5rem;margin:0;text-shadow:0 0 8px #fff;}
+nav {position:sticky;top:0;background:#111;display:flex;justify-content:center;flex-wrap:wrap;gap:8px;padding:10px;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,0.5);}
+nav a {color:#fff;text-decoration:none;font-weight:bold;padding:6px 12px;border-radius:8px;transition:0.3s;cursor:pointer;}
+nav a.active {background:linear-gradient(90deg,#ff007f,#00bfff);}
+section {padding:20px 15px;text-align:center;display:none;}
+section.active {display:block;}
+h2,h3 {margin-bottom:12px;text-shadow:0 0 8px #ff007f,0 0 10px #00bfff;}
+.card-container {display:flex;flex-wrap:wrap;justify-content:center;gap:15px;margin-top:15px;}
+.card {padding:12px;border-radius:10px;width:140px;text-align:center;font-weight:bold;font-size:1.1rem;box-shadow:0 0 10px rgba(255,255,255,0.2);transition:0.3s;}
+.card:hover {transform:translateY(-4px);box-shadow:0 0 15px rgba(255,255,255,0.4);}
+table {width:90%;max-width:900px;margin:15px auto;border-collapse:collapse;}
+th,td {border:1px solid #444;padding:8px;text-align:center;}
+th {background:#222;}
+textarea,input[type=text],input[type=number],select{width:90%;margin:4px 0;padding:5px;border-radius:5px;border:none;background:#222;color:#fff;}
+textarea{resize:none;}
+footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:14px;color:#aaa;}
+.division-table {margin:15px auto;border-radius:10px;overflow:hidden;box-shadow:0 0 12px rgba(255,0,127,0.3);}
+.division-table table{border:none;width:100%;}
+.division-table th{background:#222;color:#fff;}
+.division-table td{background:#1a1a1a;color:#fff;}
+.week-select {margin-bottom:15px;padding:5px;border-radius:6px;border:none;background:#222;color:#fff;}
 </style>
 </head>
-
 <body>
 
-<header>Shmears Draft League</header>
+<header>
+<h1>Shmears Draft League</h1>
+</header>
 
 <nav>
-<button onclick="showTab('home')">Home</button>
-<button onclick="showTab('live')">Live</button>
-<button onclick="showTab('standings')">Standings</button>
-<button onclick="showTab('teams')">Teams</button>
-<button onclick="showTab('players')">Players</button>
-<button onclick="showTab('transactions')">Transactions</button>
-<button onclick="showTab('admin')">Admin</button>
+<a class="active" data-section="home">Home</a>
+<a data-section="hub">Hub</a>
+<a data-section="live">Live</a>
+<a data-section="teams">Teams</a>
+<a data-section="standings">Standings</a>
+<a data-section="players">Players</a>
+<a data-section="freeagents">Free Agents</a>
+<a data-section="transactions">Transactions</a>
+<a data-section="info">Info</a>
+<a data-section="admin">Admin</a>
 </nav>
 
 <section id="home" class="active">
-<h2>Season 1</h2>
-<p>Opening Day: March 26, 2026</p>
+<h2>Welcome to Shmears Draft League</h2>
+<p><strong>Opening Day: March 26, 2026</strong></p>
+<label>Select Season: </label>
+<select id="seasonSelect"><option value="1">Season 1</option></select>
+<p>Use the navigation above to explore each section.</p>
+</section>
+
+<section id="hub">
+<h2>Hub - Season 1</h2>
+<h3>Upcoming Games</h3>
+<div class="card-container" id="upcomingGames">No games entered yet.</div>
+<h3>Draft Results</h3>
+<div class="card-container" id="draftResults">No draft results yet.</div>
 </section>
 
 <section id="live">
 <h2>Live Matchups</h2>
-<select id="weekSelect" onchange="renderLive()"></select>
-<div id="liveArea"></div>
+<label>Select Week: </label>
+<select class="week-select" id="weekSelect"></select>
+<div class="card-container" id="live-cards"></div>
+</section>
+
+<section id="teams">
+<h2>Teams</h2>
+<h3>South Division</h3>
+<div class="card-container" id="southTeams"></div>
+<h3>West Division</h3>
+<div class="card-container" id="westTeams"></div>
+<h3>North Division</h3>
+<div class="card-container" id="northTeams"></div>
+<h3>East Division</h3>
+<div class="card-container" id="eastTeams"></div>
 </section>
 
 <section id="standings">
 <h2>Standings</h2>
-<div id="standingsArea"></div>
-</section>
-
-<section id="teams">
-<h2>Teams by Division</h2>
-<div class="division"><b>South:</b> Sharks, Wolves, Falcons</div>
-<div class="division"><b>West:</b> Leopards, Dragons, Bison</div>
-<div class="division"><b>North:</b> Cobras, Stallions, Scorpions</div>
-<div class="division"><b>East:</b> Iguanas, Wildcats, Vultures</div>
+<div id="standings-container"></div>
 </section>
 
 <section id="players">
 <h2>Players</h2>
-<div id="playersArea"></div>
+<div class="card-container" id="playersList">No players added yet.</div>
+</section>
+
+<section id="freeagents">
+<h2>Free Agents</h2>
+<div class="card-container" id="freeAgentsList">No free agents yet.</div>
 </section>
 
 <section id="transactions">
-<h2>League News</h2>
-<div id="newsArea"></div>
+<h2>Transactions</h2>
+<div class="card-container" id="transactionsList">No transactions yet.</div>
+</section>
+
+<section id="info">
+<h2>About Shmears Draft League</h2>
+<p>Shmears Draft League is a competitive fantasy draft league with 12 teams and live scoring!</p>
+<p>Credits: @elziee, @shmear, @neto9, @for.the.faithful</p>
 </section>
 
 <section id="admin">
 <h2>Admin Panel</h2>
-<input type="password" id="adminPass" placeholder="Password">
-<button onclick="unlock()">Unlock</button>
+<p>Enter password to edit league data:</p>
+<input type="password" id="adminPass" placeholder="Enter password">
+<button onclick="unlockAdmin()">Unlock Admin</button>
 
-<div id="adminPanel" style="display:none">
+<div id="adminPanel" style="display:none;">
+<h3>Edit Live Matchups by Week</h3>
+<div id="editLive"></div>
 
-<h3>Edit Scores</h3>
-<select id="adminWeek" onchange="renderAdmin()"></select>
-<div id="adminScores"></div>
+<h3>Edit Hub</h3>
+<label>Upcoming Games:</label>
+<textarea id="adminUpcoming" rows="4"></textarea>
+<label>Draft Results:</label>
+<textarea id="adminDraftResults" rows="4"></textarea>
 
-<h3>Edit Players (format: Player - Team)</h3>
-<textarea id="adminPlayers"></textarea>
+<h3>Edit Players</h3>
+<textarea id="adminPlayers" rows="4"></textarea>
 
-<h3>Edit Transactions (newest at top)</h3>
-<textarea id="adminNews"></textarea>
+<h3>Edit Free Agents</h3>
+<textarea id="adminFreeAgents" rows="4"></textarea>
 
-<br><button onclick="saveAll()">Save Everything</button>
+<h3>Edit Transactions</h3>
+<textarea id="adminTransactions" rows="4"></textarea>
 
+<button onclick="saveAdmin()">Save & Update</button>
+<pre id="jsonOutput"></pre>
 </div>
 </section>
 
+<footer>© 2026 Shmears Draft League</footer>
+
 <script>
+document.addEventListener('DOMContentLoaded', function(){
+  const navLinks=document.querySelectorAll('nav a');
+  navLinks.forEach(link=>link.addEventListener('click',()=>{
+    navLinks.forEach(l=>l.classList.remove('active'));
+    link.classList.add('active');
+    document.querySelectorAll('section').forEach(sec=>sec.classList.remove('active'));
+    document.getElementById(link.dataset.section).classList.add('active');
+    if(link.dataset.section==='admin') renderAdmin();
+  }));
 
-const teams = ["Sharks","Wolves","Falcons","Leopards","Dragons","Bison","Cobras","Stallions","Scorpions","Iguanas","Wildcats","Vultures"];
+  const teams=["Sharks","Wolves","Falcons","Leopards","Dragons","Bison","Cobras","Stallions","Scorpions","Iguanas","Wildcats","Vultures"];
+  const colors={
+    "Sharks":"#1CA9C9","Wolves":"#6E6E6E","Falcons":"#D32F2F","Leopards":"#FBC02D",
+    "Dragons":"#388E3C","Bison":"#8D6E63","Cobras":"#7B1FA2","Stallions":"#F57C00",
+    "Scorpions":"#212121","Iguanas":"#C0CA33","Wildcats":"#1976D2","Vultures":"#424242"
+  };
+  const divisions={
+    "South":["Sharks","Wolves","Falcons"],
+    "West":["Leopards","Dragons","Bison"],
+    "North":["Cobras","Stallions","Scorpions"],
+    "East":["Iguanas","Wildcats","Vultures"]
+  };
 
-const divisions = {
-South:["Sharks","Wolves","Falcons"],
-West:["Leopards","Dragons","Bison"],
-North:["Cobras","Stallions","Scorpions"],
-East:["Iguanas","Wildcats","Vultures"]
-};
+  function renderTeams(){
+    for(const div in divisions){
+      const container=document.getElementById(div.toLowerCase()+"Teams");
+      container.innerHTML='';
+      divisions[div].forEach(t=>{
+        const card=document.createElement('div'); card.className='card'; card.style.background=colors[t]; card.textContent=t;
+        container.appendChild(card);
+      });
+    }
+  }
+  renderTeams();
 
-const colors = {
-Sharks:"#1CA9C9", Wolves:"#777", Falcons:"#C62828",
-Leopards:"#FBC02D", Dragons:"#2E7D32", Bison:"#8D6E63",
-Cobras:"#6A1B9A", Stallions:"#EF6C00", Scorpions:"#212121",
-Iguanas:"#AFB42B", Wildcats:"#1565C0", Vultures:"#424242"
-};
+  // Proper 11-week round-robin schedule for 12 teams
+  const schedule=[
+    [["Sharks","Wolves"],["Falcons","Leopards"],["Dragons","Bison"],["Cobras","Stallions"],["Scorpions","Iguanas"],["Wildcats","Vultures"]],
+    [["Sharks","Falcons"],["Wolves","Dragons"],["Leopards","Bison"],["Cobras","Scorpions"],["Stallions","Wildcats"],["Iguanas","Vultures"]],
+    [["Sharks","Leopards"],["Wolves","Bison"],["Falcons","Dragons"],["Cobras","Wildcats"],["Stallions","Vultures"],["Scorpions","Iguanas"]],
+    [["Sharks","Dragons"],["Wolves","Falcons"],["Leopards","Bison"],["Cobras","Vultures"],["Stallions","Iguanas"],["Scorpions","Wildcats"]],
+    [["Sharks","Bison"],["Wolves","Leopards"],["Falcons","Dragons"],["Cobras","Iguanas"],["Stallions","Wildcats"],["Scorpions","Vultures"]],
+    [["Sharks","Cobras"],["Wolves","Stallions"],["Falcons","Scorpions"],["Leopards","Iguanas"],["Dragons","Wildcats"],["Bison","Vultures"]],
+    [["Sharks","Stallions"],["Wolves","Cobras"],["Falcons","Vultures"],["Leopards","Wildcats"],["Dragons","Iguanas"],["Bison","Scorpions"]],
+    [["Sharks","Scorpions"],["Wolves","Iguanas"],["Falcons","Cobras"],["Leopards","Bison"],["Dragons","Vultures"],["Stallions","Wildcats"]],
+    [["Sharks","Iguanas"],["Wolves","Scorpions"],["Falcons","Wildcats"],["Leopards","Dragons"],["Bison","Cobras"],["Stallions","Vultures"]],
+    [["Sharks","Wildcats"],["Wolves","Vultures"],["Falcons","Iguanas"],["Leopards","Cobras"],["Dragons","Stallions"],["Bison","Scorpions"]],
+    [["Sharks","Vultures"],["Wolves","Wildcats"],["Falcons","Stallions"],["Leopards","Iguanas"],["Dragons","Cobras"],["Bison","Scorpions"]]
+  ];
 
-let schedule=[];
-let weeks=[];
-let standings=[];
+  // Initialize weeks with scores
+  let weeks=schedule.map(week=>week.map(m=>({home:m[0],away:m[1],homeScore:0,awayScore:0})));
 
-function generateSchedule(){
-let arr=[...teams];
-for(let w=0;w<11;w++){
-let week=[];
-for(let i=0;i<6;i++){
-week.push({home:arr[i],away:arr[11-i],homeScore:0,awayScore:0});
-}
-arr.splice(1,0,arr.pop());
-schedule.push(week);
-}
-weeks=JSON.parse(JSON.stringify(schedule));
-}
+  let standings=teams.map((t,i)=>{
+    let div=["South","South","South","West","West","West","North","North","North","East","East","East"][i];
+    return {team:t,division:div,wins:0,losses:0};
+  });
 
-function generateStandings(){
-standings=[];
-teams.forEach(t=>{
-let div=Object.keys(divisions).find(d=>divisions[d].includes(t));
-standings.push({team:t,division:div,w:0,l:0});
+  const weekSelect=document.getElementById('weekSelect');
+  for(let i=1;i<=11;i++){let opt=document.createElement('option');opt.value=i;opt.textContent='Week '+i;weekSelect.appendChild(opt);}
+  weekSelect.addEventListener('change',()=>renderLive(parseInt(weekSelect.value)-1));
+
+  function renderLive(week){
+    const liveContainer=document.getElementById('live-cards'); liveContainer.innerHTML='';
+    weeks[week].forEach(m=>{
+      const card=document.createElement('div'); card.className='card';
+      card.style.background=colors[m.home]; card.textContent=`${m.home} ${m.homeScore} - ${m.awayScore} ${m.away}`;
+      liveContainer.appendChild(card);
+    });
+  }
+
+  function refreshStandings(){
+    standings.forEach(s=>{s.wins=0;s.losses=0;});
+    weeks.forEach(wk=>{wk.forEach(m=>{
+      const h=standings.find(t=>t.team===m.home);
+      const a=standings.find(t=>t.team===m.away);
+      if(m.homeScore>m.awayScore){h.wins++;a.losses++;}
+      else if(m.awayScore>m.homeScore){a.wins++;h.losses++;}
+    });});
+    const container=document.getElementById('standings-container'); container.innerHTML='';
+    [...new Set(standings.map(s=>s.division))].forEach(div=>{
+      const divData=standings.filter(s=>s.division===div);
+      const divTable=document.createElement('div'); divTable.className='division-table';
+      divTable.innerHTML=`<h3>${div} Division</h3><table><tr><th>Team</th><th>Wins</th><th>Losses</th><th>Win %</th></tr></table>`;
+      const table=divTable.querySelector('table');
+      divData.forEach(s=>{
+        const wp=s.wins+s.losses===0?0:(s.wins/(s.wins+s.losses)*100).toFixed(1);
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td style="background:${colors[s.team]};font-weight:bold;">${s.team}</td><td>${s.wins}</td><td>${s.losses}</td><td>${wp}%</td>`;
+        table.appendChild(tr);
+      });
+      container.appendChild(divTable);
+    });
+  }
+
+  renderLive(0); refreshStandings();
+
+  window.unlockAdmin=function(){
+    if(document.getElementById('adminPass').value==='shmearsadmin'){
+      document.getElementById('adminPanel').style.display='block'; renderAdmin();
+    } else alert('Wrong password');
+  }
+
+  function renderAdmin(){
+    const editLive=document.getElementById('editLive'); editLive.innerHTML='';
+    let week=parseInt(weekSelect.value)-1;
+    weeks[week].forEach((m,i)=>{
+      const div=document.createElement('div');
+      div.innerHTML=`Home:<input type="text" id="home${i}" value="${m.home}"> Score:<input type="number" id="homeScore${i}" value="${m.homeScore}"> Away:<input type="text" id="away${i}" value="${m.away}"> Score:<input type="number" id="awayScore${i}" value="${m.awayScore}">`;
+      editLive.appendChild(div);
+    });
+    document.getElementById('adminUpcoming').value=document.getElementById('upcomingGames').innerHTML;
+    document.getElementById('adminDraftResults').value=document.getElementById('draftResults').innerHTML;
+  }
+
+  window.saveAdmin=function(){
+    let week=parseInt(weekSelect.value)-1;
+    weeks[week].forEach((m,i)=>{
+      m.home=document.getElementById(`home${i}`).value;
+      m.away=document.getElementById(`away${i}`).value;
+      m.homeScore=parseInt(document.getElementById(`homeScore${i}`).value);
+      m.awayScore=parseInt(document.getElementById(`awayScore${i}`).value);
+    });
+    renderLive(week); refreshStandings();
+    alert('Saved!');
+  }
+
 });
-}
-
-function calculateStandings(){
-standings.forEach(s=>{s.w=0;s.l=0});
-weeks.forEach(w=>{
-w.forEach(g=>{
-let h=standings.find(s=>s.team===g.home);
-let a=standings.find(s=>s.team===g.away);
-if(g.homeScore>g.awayScore){h.w++;a.l++}
-if(g.awayScore>g.homeScore){a.w++;h.l++}
-});
-});
-renderStandings();
-}
-
-function renderStandings(){
-let html="";
-for(let div in divisions){
-html+=`<h3>${div} Division</h3><table><tr><th>Team</th><th>W</th><th>L</th><th>%</th></tr>`;
-standings.filter(s=>s.division===div).forEach(s=>{
-let pct=s.w+s.l===0?0:(s.w/(s.w+s.l)).toFixed(3);
-html+=`<tr>
-<td style="background:${colors[s.team]}">${s.team}</td>
-<td>${s.w}</td>
-<td>${s.l}</td>
-<td>${pct}</td>
-</tr>`;
-});
-html+="</table>";
-}
-document.getElementById("standingsArea").innerHTML=html;
-}
-
-function renderLive(){
-let week=document.getElementById("weekSelect").value-1;
-let html="";
-weeks[week].forEach((g,i)=>{
-let bg=i%2?"#1c1c1c":"#2a2a2a";
-html+=`<div class="card" style="background:${bg}">
-<span style="color:${colors[g.home]}">${g.home}</span> ${g.homeScore}
- - ${g.awayScore} 
-<span style="color:${colors[g.away]}">${g.away}</span>
-</div>`;
-});
-document.getElementById("liveArea").innerHTML=html;
-}
-
-function showTab(id){
-document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
-document.getElementById(id).classList.add("active");
-}
-
-function unlock(){
-if(document.getElementById("adminPass").value==="shmearsadmin"){
-document.getElementById("adminPanel").style.display="block";
-renderAdmin();
-}
-}
-
-function renderAdmin(){
-let week=document.getElementById("adminWeek").value-1;
-let html="";
-weeks[week].forEach((g,i)=>{
-html+=`
-${g.home} <input type="number" id="h${i}" value="${g.homeScore}">
-${g.away} <input type="number" id="a${i}" value="${g.awayScore}">
-<br>`;
-});
-document.getElementById("adminScores").innerHTML=html;
-}
-
-function saveAll(){
-let week=document.getElementById("adminWeek").value-1;
-weeks[week].forEach((g,i)=>{
-g.homeScore=parseInt(document.getElementById("h"+i).value)||0;
-g.awayScore=parseInt(document.getElementById("a"+i).value)||0;
-});
-calculateStandings();
-
-let playerText=document.getElementById("adminPlayers").value.split("\n");
-let grouped={};
-playerText.forEach(line=>{
-let parts=line.split("-");
-if(parts.length===2){
-let name=parts[0].trim();
-let team=parts[1].trim();
-if(!grouped[team])grouped[team]=[];
-grouped[team].push(name);
-}
-});
-let html="";
-for(let t in grouped){
-html+=`<h3>${t}</h3>`;
-grouped[t].forEach(p=>html+=`<div>${p}</div>`);
-}
-document.getElementById("playersArea").innerHTML=html;
-
-let news=document.getElementById("adminNews").value.split("\n").reverse();
-let newsHtml="";
-news.forEach(n=>{ if(n.trim()!="") newsHtml+=`<div class="news">${n}</div>`;});
-document.getElementById("newsArea").innerHTML=newsHtml;
-
-renderLive();
-alert("League Updated");
-}
-
-function init(){
-generateSchedule();
-generateStandings();
-
-for(let i=1;i<=11;i++){
-weekSelect.innerHTML+=`<option value="${i}">Week ${i}</option>`;
-adminWeek.innerHTML+=`<option value="${i}">Week ${i}</option>`;
-}
-
-let start=new Date(2026,2,26);
-let today=new Date();
-let diff=Math.floor((today-start)/(1000*60*60*24));
-let current=diff>=0?Math.min(diff+1,11):1;
-weekSelect.value=current;
-adminWeek.value=current;
-
-renderLive();
-calculateStandings();
-}
-
-init();
-
 </script>
 </body>
 </html>
