@@ -1,27 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shmears Draft League</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-body{margin:0;font-family:Montserrat;background:#0f0f0f;color:white}
-header{background:#111;padding:12px 0;text-align:center;font-size:22px;font-weight:700}
+body{margin:0;font-family:Montserrat;background:#0f0f0f;color:#fff}
+header{background:#111;padding:15px;text-align:center;font-size:22px;font-weight:700}
 nav{display:flex;flex-wrap:wrap;justify-content:center;background:#181818}
-nav button{background:none;border:none;color:white;padding:10px 14px;cursor:pointer;font-weight:600}
+nav button{background:none;border:none;color:#fff;padding:10px 14px;cursor:pointer;font-weight:600}
 nav button:hover{background:#333}
 section{display:none;padding:20px;text-align:center}
 .active{display:block}
 .card{padding:10px;margin:8px auto;max-width:500px;border-radius:8px;font-weight:600}
+.division{margin-top:20px}
 table{width:90%;max-width:700px;margin:10px auto;border-collapse:collapse;font-size:14px}
 th,td{border:1px solid #333;padding:6px;text-align:center}
-.news{background:#1a1a1a;margin:6px auto;padding:10px;border-radius:6px;max-width:600px;text-align:left}
+.news{background:#1a1a1a;margin:6px auto;padding:8px;border-radius:6px;max-width:600px;text-align:left}
 select,input,textarea{margin:5px;padding:6px;border-radius:6px;border:none}
 textarea{width:90%;height:80px}
-h3{margin-top:15px;margin-bottom:5px}
 </style>
 </head>
+
 <body>
 
 <header>Shmears Draft League</header>
@@ -54,10 +55,10 @@ h3{margin-top:15px;margin-bottom:5px}
 
 <section id="teams">
 <h2>Teams by Division</h2>
-<div><b>South:</b> Sharks, Wolves, Falcons</div>
-<div><b>West:</b> Leopards, Dragons, Bison</div>
-<div><b>North:</b> Cobras, Stallions, Scorpions</div>
-<div><b>East:</b> Iguanas, Wildcats, Vultures</div>
+<div class="division"><b>South:</b> Sharks, Wolves, Falcons</div>
+<div class="division"><b>West:</b> Leopards, Dragons, Bison</div>
+<div class="division"><b>North:</b> Cobras, Stallions, Scorpions</div>
+<div class="division"><b>East:</b> Iguanas, Wildcats, Vultures</div>
 </section>
 
 <section id="players">
@@ -76,7 +77,8 @@ h3{margin-top:15px;margin-bottom:5px}
 <button onclick="unlock()">Unlock</button>
 
 <div id="adminPanel" style="display:none">
-<h3>Select Week to Edit</h3>
+
+<h3>Edit Scores</h3>
 <select id="adminWeek" onchange="renderAdmin()"></select>
 <div id="adminScores"></div>
 
@@ -87,101 +89,130 @@ h3{margin-top:15px;margin-bottom:5px}
 <textarea id="adminNews"></textarea>
 
 <br><button onclick="saveAll()">Save Everything</button>
+
 </div>
 </section>
 
 <script>
-const ADMIN_PASSWORD="jaw";
-const teams=["Sharks","Wolves","Falcons","Leopards","Dragons","Bison","Cobras","Stallions","Scorpions","Iguanas","Wildcats","Vultures"];
-const divisions={South:["Sharks","Wolves","Falcons"],West:["Leopards","Dragons","Bison"],North:["Cobras","Stallions","Scorpions"],East:["Iguanas","Wildcats","Vultures"]};
-const colors={Sharks:"#1CA9C9", Wolves:"#777", Falcons:"#C62828", Leopards:"#FBC02D", Dragons:"#2E7D32", Bison:"#8D6E63", Cobras:"#6A1B9A", Stallions:"#EF6C00", Scorpions:"#212121", Iguanas:"#AFB42B", Wildcats:"#1565C0", Vultures:"#424242"};
-let weeks=[]; let standings=[];
+const ADMIN_PASSWORD = "jaw";
 
-/* Schedule Generation */
+const teams = ["Sharks","Wolves","Falcons","Leopards","Dragons","Bison","Cobras","Stallions","Scorpions","Iguanas","Wildcats","Vultures"];
+
+const divisions = {
+South:["Sharks","Wolves","Falcons"],
+West:["Leopards","Dragons","Bison"],
+North:["Cobras","Stallions","Scorpions"],
+East:["Iguanas","Wildcats","Vultures"]
+};
+
+const colors = {
+Sharks:"#1CA9C9", Wolves:"#777", Falcons:"#C62828",
+Leopards:"#FBC02D", Dragons:"#2E7D32", Bison:"#8D6E63",
+Cobras:"#6A1B9A", Stallions:"#EF6C00", Scorpions:"#212121",
+Iguanas:"#AFB42B", Wildcats:"#1565C0", Vultures:"#424242"
+};
+
+let schedule=[];
+let weeks=[];
+let standings=[];
+
 function generateSchedule(){
 let arr=[...teams];
-for(let w=0; w<11; w++){
+for(let w=0;w<11;w++){
 let week=[];
 for(let i=0;i<6;i++){
 week.push({home:arr[i],away:arr[11-i],homeScore:0,awayScore:0});
 }
 arr.splice(1,0,arr.pop());
-weeks.push(week);
+schedule.push(week);
 }
+weeks=JSON.parse(JSON.stringify(schedule));
 }
 
-/* Standings */
 function generateStandings(){
+standings=[];
 teams.forEach(t=>{
 let div=Object.keys(divisions).find(d=>divisions[d].includes(t));
 standings.push({team:t,division:div,w:0,l:0});
 });
 }
+
 function calculateStandings(){
-standings.forEach(s=>{s.w=0;s.l=0;});
+standings.forEach(s=>{s.w=0;s.l=0});
 weeks.forEach(w=>{
 w.forEach(g=>{
 let h=standings.find(s=>s.team===g.home);
 let a=standings.find(s=>s.team===g.away);
-if(g.homeScore>g.awayScore){h.w++;a.l++;}
-if(g.awayScore>g.homeScore){a.w++;h.l++;}
+if(g.homeScore>g.awayScore){h.w++;a.l++}
+if(g.awayScore>g.homeScore){a.w++;h.l++}
 });
 });
 renderStandings();
 }
+
 function renderStandings(){
 let html="";
 for(let div in divisions){
 html+=`<h3>${div} Division</h3><table><tr><th>Team</th><th>W</th><th>L</th><th>%</th></tr>`;
 standings.filter(s=>s.division===div).forEach(s=>{
 let pct=s.w+s.l===0?0:(s.w/(s.w+s.l)).toFixed(3);
-html+=`<tr><td style="background:${colors[s.team]}">${s.team}</td><td>${s.w}</td><td>${s.l}</td><td>${pct}</td></tr>`;
+html+=`<tr>
+<td style="background:${colors[s.team]}">${s.team}</td>
+<td>${s.w}</td>
+<td>${s.l}</td>
+<td>${pct}</td>
+</tr>`;
 });
 html+="</table>";
 }
 document.getElementById("standingsArea").innerHTML=html;
 }
 
-/* Live Rendering */
 function renderLive(){
-let week=parseInt(document.getElementById("weekSelect").value)-1;
+let week=document.getElementById("weekSelect").value-1;
 let html="";
 weeks[week].forEach((g,i)=>{
 let bg=i%2?"#1c1c1c":"#2a2a2a";
-html+=`<div class="card" style="background:${bg}"><span style="color:${colors[g.home]}">${g.home}</span> ${g.homeScore} - ${g.awayScore} <span style="color:${colors[g.away]}">${g.away}</span></div>`;
+html+=`<div class="card" style="background:${bg}">
+<span style="color:${colors[g.home]}">${g.home}</span> ${g.homeScore}
+ - ${g.awayScore} 
+<span style="color:${colors[g.away]}">${g.away}</span>
+</div>`;
 });
 document.getElementById("liveArea").innerHTML=html;
 }
 
-/* Tabs */
 function showTab(id){
 document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
 }
 
-/* Admin */
 function unlock(){
 if(document.getElementById("adminPass").value===ADMIN_PASSWORD){
 document.getElementById("adminPanel").style.display="block";
 renderAdmin();
 } else alert("Wrong password");
 }
+
 function renderAdmin(){
-let week=parseInt(document.getElementById("adminWeek").value)-1;
+let week=document.getElementById("adminWeek").value-1;
 let html="";
 weeks[week].forEach((g,i)=>{
-html+=`${g.home} <input type="number" id="h${i}" value="${g.homeScore}"> ${g.away} <input type="number" id="a${i}" value="${g.awayScore}"><br>`;
+html+=`
+${g.home} <input type="number" id="h${i}" value="${g.homeScore}">
+${g.away} <input type="number" id="a${i}" value="${g.awayScore}">
+<br>`;
 });
 document.getElementById("adminScores").innerHTML=html;
 }
+
 function saveAll(){
-let week=parseInt(document.getElementById("adminWeek").value)-1;
+let week=document.getElementById("adminWeek").value-1;
 weeks[week].forEach((g,i)=>{
 g.homeScore=parseInt(document.getElementById("h"+i).value)||0;
 g.awayScore=parseInt(document.getElementById("a"+i).value)||0;
 });
 calculateStandings();
-renderLive();
 
 /* Players */
 let playerText=document.getElementById("adminPlayers").value.split("\n");
@@ -196,39 +227,43 @@ grouped[team].push(name);
 }
 });
 let html="";
-for(let t in grouped){html+=`<h3>${t}</h3>`;grouped[t].forEach(p=>html+=`<div>${p}</div>`);}
+for(let t in grouped){
+html+=`<h3>${t}</h3>`;
+grouped[t].forEach(p=>html+=`<div>${p}</div>`);
+}
 document.getElementById("playersArea").innerHTML=html;
 
 /* Transactions */
 let news=document.getElementById("adminNews").value.split("\n").reverse();
 let newsHtml="";
-news.forEach(n=>{if(n.trim()!="") newsHtml+=`<div class="news">${n}</div>`;});
+news.forEach(n=>{ if(n.trim()!="") newsHtml+=`<div class="news">${n}</div>`;});
 document.getElementById("newsArea").innerHTML=newsHtml;
 
+renderLive();
 alert("League Updated");
 }
 
-/* Init */
 function init(){
 generateSchedule();
 generateStandings();
-const weekSelect=document.getElementById("weekSelect");
-const adminWeek=document.getElementById("adminWeek");
+
 for(let i=1;i<=11;i++){
 weekSelect.innerHTML+=`<option value="${i}">Week ${i}</option>`;
 adminWeek.innerHTML+=`<option value="${i}">Week ${i}</option>`;
 }
+
 let start=new Date(2026,2,26);
 let today=new Date();
 let diff=Math.floor((today-start)/(1000*60*60*24));
 let current=diff>=0?Math.min(diff+1,11):1;
 weekSelect.value=current;
 adminWeek.value=current;
+
 renderLive();
 calculateStandings();
 }
+
 init();
 </script>
-
 </body>
 </html>
