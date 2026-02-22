@@ -90,7 +90,11 @@ let data = {
   ],
   liveMatchups:[
     {home:"Sharks",away:"Wolves",homeScore:0,awayScore:0},
-    {home:"Falcons",away:"Leopards",homeScore:0,awayScore:0}
+    {home:"Falcons",away:"Leopards",homeScore:0,awayScore:0},
+    {home:"Dragons",away:"Bison",homeScore:0,awayScore:0},
+    {home:"Cobras",away:"Stallions",homeScore:0,awayScore:0},
+    {home:"Scorpions",away:"Vultures",homeScore:0,awayScore:0},
+    {home:"Wildcats",away:"Iguanas",homeScore:0,awayScore:0}
   ]
 };
 
@@ -125,7 +129,7 @@ function renderAdmin(){
   const liveDiv=document.getElementById('editLive');liveDiv.innerHTML='';
   data.liveMatchups.forEach((match,i)=>{
     const div=document.createElement('div');
-    div.innerHTML=`Home: <select id="home${i}">${data.teams.map((t,j)=>`<option value="${t.name}" ${t.name===match.home?'selected':''}>${t.name}</option>`).join('')}</select> Score: <input type="number" id="homeScore${i}" value="${match.homeScore}"> Away: <select id="away${i}">${data.teams.map((t,j)=>`<option value="${t.name}" ${t.name===match.away?'selected':''}>${t.name}</option>`).join('')}</select> Score: <input type="number" id="awayScore${i}" value="${match.awayScore}">`;
+    div.innerHTML=`Home: <select id="home${i}">${data.teams.map((t)=>`<option value="${t.name}" ${t.name===match.home?'selected':''}>${t.name}</option>`).join('')}</select> Score: <input type="number" id="homeScore${i}" value="${match.homeScore}"> Away: <select id="away${i}">${data.teams.map((t)=>`<option value="${t.name}" ${t.name===match.away?'selected':''}>${t.name}</option>`).join('')}</select> Score: <input type="number" id="awayScore${i}" value="${match.awayScore}">`;
     liveDiv.appendChild(div);
   });
 }
