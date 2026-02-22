@@ -29,8 +29,9 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 .division-table th{background:#222;color:#fff;}
 .division-table td{background:#1a1a1a;color:#fff;}
 .week-select {margin-bottom:15px;padding:5px;border-radius:6px;border:none;background:#222;color:#fff;}
-.transaction-row{margin-bottom:5px;}
-.transaction-row select,input{margin-right:5px;}
+.admin-section{margin-bottom:15px;}
+.admin-row{margin:5px 0;}
+.transaction-row{display:flex;gap:5px;align-items:center;justify-content:center;}
 </style>
 </head>
 <body>
@@ -105,12 +106,12 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 
 <section id="transactions">
 <h2>Transactions</h2>
-<div class="card-container" id="transactionsList">No transactions yet.</div>
+<div id="transactionsList">No transactions yet.</div>
 </section>
 
 <section id="draftpool">
 <h2>Draft Pool</h2>
-<div class="card-container" id="draftPoolList">No players in pool yet.</div>
+<div class="card-container" id="draftPoolList">No players added yet.</div>
 </section>
 
 <section id="info">
@@ -127,14 +128,14 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 
 <div id="adminPanel" style="display:none;">
 <h3>Edit Live Matchups by Week</h3>
-<label>Select Week: </label>
-<select class="week-select" id="adminWeek"></select>
+<label>Select Week:</label>
+<select id="adminWeekSelect"></select>
 <div id="editLive"></div>
 
 <h3>Edit Hub</h3>
-<label>Upcoming Games (one per line):</label>
+<label>Upcoming Games:</label>
 <textarea id="adminUpcoming" rows="4"></textarea>
-<label>Draft Results (one per line):</label>
+<label>Draft Results:</label>
 <textarea id="adminDraftResults" rows="4"></textarea>
 
 <h3>Edit Players</h3>
@@ -148,7 +149,7 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 <button onclick="addTransactionRow()">Add Transaction</button>
 
 <h3>Edit Draft Pool</h3>
-<textarea id="adminDraftPool" rows="4"></textarea>
+<textarea id="adminDraftPool" rows="6" placeholder="Enter player names, one per line"></textarea>
 
 <button onclick="saveAdmin()">Save & Update</button>
 </div>
@@ -157,217 +158,211 @@ footer{padding:12px;background:#000;margin-top:25px;text-align:center;font-size:
 <footer>© 2026 Shmears Draft League</footer>
 
 <script>
-document.addEventListener('DOMContentLoaded', function(){
-  const navLinks=document.querySelectorAll('nav a');
-  navLinks.forEach(link=>link.addEventListener('click',()=>{
-    navLinks.forEach(l=>l.classList.remove('active'));
-    link.classList.add('active');
-    document.querySelectorAll('section').forEach(sec=>sec.classList.remove('active'));
-    document.getElementById(link.dataset.section).classList.add('active');
-    if(link.dataset.section==='admin') renderAdmin();
+// ===== Data & Settings =====
+const teams = ["Sharks","Wolves","Falcons","Leopards","Dragons","Bison","Cobras","Stallions","Scorpions","Iguanas","Wildcats","Vultures"];
+const colors = { "Sharks":"#1CA9C9","Wolves":"#6E6E6E","Falcons":"#D32F2F","Leopards":"#FBC02D",
+                 "Dragons":"#388E3C","Bison":"#8D6E63","Cobras":"#7B1FA2","Stallions":"#F57C00",
+                 "Scorpions":"#212121","Iguanas":"#C0CA33","Wildcats":"#1976D2","Vultures":"#424242" };
+const divisions = { "South":["Sharks","Wolves","Falcons"],"West":["Leopards","Dragons","Bison"],
+                    "North":["Cobras","Stallions","Scorpions"],"East":["Iguanas","Wildcats","Vultures"] };
+let schedule = [
+  [["Sharks","Wolves"],["Falcons","Leopards"],["Dragons","Bison"],["Cobras","Stallions"],["Scorpions","Iguanas"],["Wildcats","Vultures"]],
+  [["Sharks","Falcons"],["Wolves","Dragons"],["Leopards","Bison"],["Cobras","Scorpions"],["Stallions","Wildcats"],["Iguanas","Vultures"]],
+  [["Sharks","Leopards"],["Wolves","Bison"],["Falcons","Dragons"],["Cobras","Wildcats"],["Stallions","Vultures"],["Scorpions","Iguanas"]],
+  [["Sharks","Dragons"],["Wolves","Falcons"],["Leopards","Bison"],["Cobras","Vultures"],["Stallions","Iguanas"],["Scorpions","Wildcats"]],
+  [["Sharks","Bison"],["Wolves","Leopards"],["Falcons","Dragons"],["Cobras","Iguanas"],["Stallions","Wildcats"],["Scorpions","Vultures"]],
+  [["Sharks","Cobras"],["Wolves","Stallions"],["Falcons","Scorpions"],["Leopards","Iguanas"],["Dragons","Wildcats"],["Bison","Vultures"]],
+  [["Sharks","Stallions"],["Wolves","Cobras"],["Falcons","Vultures"],["Leopards","Wildcats"],["Dragons","Iguanas"],["Bison","Scorpions"]],
+  [["Sharks","Scorpions"],["Wolves","Iguanas"],["Falcons","Cobras"],["Leopards","Bison"],["Dragons","Vultures"],["Stallions","Wildcats"]],
+  [["Sharks","Iguanas"],["Wolves","Scorpions"],["Falcons","Wildcats"],["Leopards","Dragons"],["Bison","Cobras"],["Stallions","Vultures"]],
+  [["Sharks","Wildcats"],["Wolves","Vultures"],["Falcons","Iguanas"],["Leopards","Cobras"],["Dragons","Stallions"],["Bison","Scorpions"]],
+  [["Sharks","Vultures"],["Wolves","Wildcats"],["Falcons","Stallions"],["Leopards","Iguanas"],["Dragons","Cobras"],["Bison","Scorpions"]]
+];
+let weeks = schedule.map(wk => wk.map(m => ({home:m[0],away:m[1],homeScore:0,awayScore:0})));
+let standings = teams.map((t,i)=>({team:t,division:["South","South","South","West","West","West","North","North","North","East","East","East"][i],wins:0,losses:0}));
+let transactions = [];
+let players = []; 
+let freeAgents = []; 
+let draftPool = [];
+
+// ===== Helpers =====
+function saveState(){ // save to localStorage
+  localStorage.setItem('weeks',JSON.stringify(weeks));
+  localStorage.setItem('standings',JSON.stringify(standings));
+  localStorage.setItem('transactions',JSON.stringify(transactions));
+  localStorage.setItem('players',JSON.stringify(players));
+  localStorage.setItem('freeAgents',JSON.stringify(freeAgents));
+  localStorage.setItem('draftPool',JSON.stringify(draftPool));
+}
+function loadState(){ // load from localStorage
+  if(localStorage.getItem('weeks')) weeks = JSON.parse(localStorage.getItem('weeks'));
+  if(localStorage.getItem('standings')) standings = JSON.parse(localStorage.getItem('standings'));
+  if(localStorage.getItem('transactions')) transactions = JSON.parse(localStorage.getItem('transactions'));
+  if(localStorage.getItem('players')) players = JSON.parse(localStorage.getItem('players'));
+  if(localStorage.getItem('freeAgents')) freeAgents = JSON.parse(localStorage.getItem('freeAgents'));
+  if(localStorage.getItem('draftPool')) draftPool = JSON.parse(localStorage.getItem('draftPool'));
+}
+function renderCards(containerId,dataArr,colorFunc){ // generic card render
+  const container = document.getElementById(containerId);
+  container.innerHTML='';
+  dataArr.forEach(p=>{
+    const card = document.createElement('div'); card.className='card';
+    card.textContent = p.name || p;
+    card.style.background = colorFunc ? colorFunc(p) : '#555';
+    container.appendChild(card);
+  });
+}
+function refreshStandings(){
+  standings.forEach(s=>{s.wins=0;s.losses=0;});
+  weeks.forEach(wk=>wk.forEach(m=>{
+    const h=standings.find(t=>t.team===m.home); const a=standings.find(t=>t.team===m.away);
+    if(m.homeScore>m.awayScore){h.wins++;a.losses++;} else if(m.awayScore>m.homeScore){a.wins++;h.losses++;}
   }));
+  const container=document.getElementById('standings-container'); container.innerHTML='';
+  [...new Set(standings.map(s=>s.division))].forEach(div=>{
+    const divData=standings.filter(s=>s.division===div);
+    const divTable=document.createElement('div'); divTable.className='division-table';
+    divTable.innerHTML=`<h3>${div} Division</h3><table><tr><th>Team</th><th>Wins</th><th>Losses</th><th>Win %</th></tr></table>`;
+    const table=divTable.querySelector('table');
+    divData.forEach(s=>{
+      const wp = s.wins+s.losses===0?0:(s.wins/(s.wins+s.losses)*100).toFixed(1);
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td style="background:${colors[s.team]};font-weight:bold;">${s.team}</td><td>${s.wins}</td><td>${s.losses}</td><td>${wp}%</td>`;
+      table.appendChild(tr);
+    });
+    container.appendChild(divTable);
+  });
+}
 
-  const teams=["Sharks","Wolves","Falcons","Leopards","Dragons","Bison","Cobras","Stallions","Scorpions","Iguanas","Wildcats","Vultures"];
-  const colors={
-    "Sharks":"#1CA9C9","Wolves":"#6E6E6E","Falcons":"#D32F2F","Leopards":"#FBC02D",
-    "Dragons":"#388E3C","Bison":"#8D6E63","Cobras":"#7B1FA2","Stallions":"#F57C00",
-    "Scorpions":"#212121","Iguanas":"#C0CA33","Wildcats":"#1976D2","Vultures":"#424242"
-  };
-  const divisions={
-    "South":["Sharks","Wolves","Falcons"],
-    "West":["Leopards","Dragons","Bison"],
-    "North":["Cobras","Stallions","Scorpions"],
-    "East":["Iguanas","Wildcats","Vultures"]
-  };
+// ===== Initial Render =====
+document.addEventListener('DOMContentLoaded',()=>{
+  loadState();
 
-  function renderTeams(){
-    for(const div in divisions){
-      const container=document.getElementById(div.toLowerCase()+"Teams");
-      container.innerHTML='';
-      divisions[div].forEach(t=>{
-        const card=document.createElement('div'); card.className='card'; card.style.background=colors[t]; card.textContent=t;
-        container.appendChild(card);
-      });
-    }
+  // Render teams
+  for(const div in divisions){
+    const container=document.getElementById(div.toLowerCase()+"Teams");
+    container.innerHTML='';
+    divisions[div].forEach(t=>{
+      const card=document.createElement('div'); card.className='card'; card.style.background=colors[t]; card.textContent=t;
+      container.appendChild(card);
+    });
   }
-  renderTeams();
 
-  // 11-week round-robin schedule
-  const schedule=[
-    [["Sharks","Wolves"],["Falcons","Leopards"],["Dragons","Bison"],["Cobras","Stallions"],["Scorpions","Iguanas"],["Wildcats","Vultures"]],
-    [["Sharks","Falcons"],["Wolves","Dragons"],["Leopards","Bison"],["Cobras","Scorpions"],["Stallions","Wildcats"],["Iguanas","Vultures"]],
-    [["Sharks","Leopards"],["Wolves","Bison"],["Falcons","Dragons"],["Cobras","Wildcats"],["Stallions","Vultures"],["Scorpions","Iguanas"]],
-    [["Sharks","Dragons"],["Wolves","Falcons"],["Leopards","Bison"],["Cobras","Vultures"],["Stallions","Iguanas"],["Scorpions","Wildcats"]],
-    [["Sharks","Bison"],["Wolves","Leopards"],["Falcons","Dragons"],["Cobras","Iguanas"],["Stallions","Wildcats"],["Scorpions","Vultures"]],
-    [["Sharks","Cobras"],["Wolves","Stallions"],["Falcons","Scorpions"],["Leopards","Iguanas"],["Dragons","Wildcats"],["Bison","Vultures"]],
-    [["Sharks","Stallions"],["Wolves","Cobras"],["Falcons","Vultures"],["Leopards","Wildcats"],["Dragons","Iguanas"],["Bison","Scorpions"]],
-    [["Sharks","Scorpions"],["Wolves","Iguanas"],["Falcons","Cobras"],["Leopards","Bison"],["Dragons","Vultures"],["Stallions","Wildcats"]],
-    [["Sharks","Iguanas"],["Wolves","Scorpions"],["Falcons","Wildcats"],["Leopards","Dragons"],["Bison","Cobras"],["Stallions","Vultures"]],
-    [["Sharks","Wildcats"],["Wolves","Vultures"],["Falcons","Iguanas"],["Leopards","Cobras"],["Dragons","Stallions"],["Bison","Scorpions"]],
-    [["Sharks","Vultures"],["Wolves","Wildcats"],["Falcons","Stallions"],["Leopards","Iguanas"],["Dragons","Cobras"],["Bison","Scorpions"]]
-  ];
-  let weeks=schedule.map(wk=>wk.map(m=>({home:m[0],away:m[1],homeScore:0,awayScore:0})));
-  let standings=teams.map((t,i)=>{
-    let div=["South","South","South","West","West","West","North","North","North","East","East","East"][i];
-    return {team:t,division:div,wins:0,losses:0};
+  // Populate week selectors
+  const weekSelect=document.getElementById('weekSelect'); const adminWeekSelect=document.getElementById('adminWeekSelect');
+  for(let i=1;i<=11;i++){
+    weekSelect.value=1; adminWeekSelect.value=1;
+    const opt1=document.createElement('option'); opt1.value=i; opt1.textContent='Week '+i; weekSelect.appendChild(opt1);
+    const opt2=document.createElement('option'); opt2.value=i; opt2.textContent='Week '+i; adminWeekSelect.appendChild(opt2);
+  }
+  weekSelect.addEventListener('change',()=>renderLive(parseInt(weekSelect.value)-1));
+  adminWeekSelect.addEventListener('change',()=>renderAdmin());
+
+  renderLive(0); refreshStandings();
+  renderCards('playersList',players);
+  renderCards('freeAgentsList',freeAgents);
+  renderCards('draftPoolList',draftPool);
+
+  // Navigation
+  document.querySelectorAll('nav a').forEach(link=>{
+    link.addEventListener('click',()=>{
+      document.querySelectorAll('nav a').forEach(l=>l.classList.remove('active'));
+      link.classList.add('active');
+      document.querySelectorAll('section').forEach(sec=>sec.classList.remove('active'));
+      document.getElementById(link.dataset.section).classList.add('active');
+      if(link.dataset.section==='admin') renderAdmin();
+    });
+  });
+});
+
+// ===== Live & Admin Functions =====
+function renderLive(week){
+  const liveContainer=document.getElementById('live-cards'); liveContainer.innerHTML='';
+  weeks[week].forEach(m=>{
+    const card=document.createElement('div'); card.className='card';
+    card.style.background = colors[m.home]; card.textContent=`${m.home} ${m.homeScore} - ${m.awayScore} ${m.away}`;
+    liveContainer.appendChild(card);
+  });
+}
+
+function unlockAdmin(){
+  if(document.getElementById('adminPass').value==='jaw'){
+    document.getElementById('adminPanel').style.display='block'; renderAdmin();
+  } else alert('Wrong password');
+}
+
+function renderAdmin(){
+  const week=parseInt(document.getElementById('adminWeekSelect').value)-1;
+  const editLive=document.getElementById('editLive'); editLive.innerHTML='';
+  weeks[week].forEach((m,i)=>{
+    const div=document.createElement('div'); div.className='admin-row';
+    div.innerHTML=`Home:<input type="text" id="home${i}" value="${m.home}"> Score:<input type="number" id="homeScore${i}" value="${m.homeScore}"> Away:<input type="text" id="away${i}" value="${m.away}"> Score:<input type="number" id="awayScore${i}" value="${m.awayScore}">`;
+    editLive.appendChild(div);
   });
 
-  // Load saved data from localStorage
-  if(localStorage.getItem('sdlData')){
-    const saved=JSON.parse(localStorage.getItem('sdlData'));
-    weeks=saved.weeks||weeks;
-    standings=saved.standings||standings;
-    document.getElementById('adminPlayers').value=saved.playersText||'';
-    document.getElementById('adminFreeAgents').value=saved.freeAgentsText||'';
-    document.getElementById('adminDraftPool').value=saved.draftPoolText||'';
-    document.getElementById('adminUpcoming').value=saved.upcomingText||'';
-    document.getElementById('adminDraftResults').value=saved.draftResultsText||'';
-    transactions=saved.transactions||[];
-  }
+  document.getElementById('adminPlayers').value=players.join("\n");
+  document.getElementById('adminFreeAgents').value=freeAgents.join("\n");
+  document.getElementById('adminDraftPool').value=draftPool.join("\n");
 
-  const weekSelect=document.getElementById('weekSelect');
-  const adminWeekSelect=document.getElementById('adminWeek');
-  for(let i=1;i<=11;i++){
-    let opt=document.createElement('option'); opt.value=i; opt.textContent='Week '+i;
-    weekSelect.appendChild(opt); adminWeekSelect.appendChild(opt.cloneNode(true));
-  }
-
-  weekSelect.addEventListener('change',()=>renderLive(parseInt(weekSelect.value)-1));
-
-  function renderLive(week){
-    const liveContainer=document.getElementById('live-cards'); liveContainer.innerHTML='';
-    weeks[week].forEach(m=>{
-      const card=document.createElement('div'); card.className='card';
-      card.style.background=colors[m.home]; card.textContent=`${m.home} ${m.homeScore} - ${m.awayScore} ${m.away}`;
-      liveContainer.appendChild(card);
-    });
-  }
-
-  function refreshStandings(){
-    standings.forEach(s=>{s.wins=0;s.losses=0;});
-    weeks.forEach(wk=>{wk.forEach(m=>{
-      const h=standings.find(t=>t.team===m.home);
-      const a=standings.find(t=>t.team===m.away);
-      if(m.homeScore>m.awayScore){h.wins++;a.losses++;}
-      else if(m.awayScore>m.homeScore){a.wins++;h.losses++;}
-    });});
-    const container=document.getElementById('standings-container'); container.innerHTML='';
-    [...new Set(standings.map(s=>s.division))].forEach(div=>{
-      const divData=standings.filter(s=>s.division===div);
-      const divTable=document.createElement('div'); divTable.className='division-table';
-      divTable.innerHTML=`<h3>${div} Division</h3><table><tr><th>Team</th><th>Wins</th><th>Losses</th><th>Win %</th></tr></table>`;
-      const table=divTable.querySelector('table');
-      divData.forEach(s=>{
-        const wp=s.wins+s.losses===0?0:(s.wins/(s.wins+s.losses)*100).toFixed(1);
-        const tr=document.createElement('tr');
-        tr.innerHTML=`<td style="background:${colors[s.team]};font-weight:bold;">${s.team}</td><td>${s.wins}</td><td>${s.losses}</td><td>${wp}%</td>`;
-        table.appendChild(tr);
-      });
-      container.appendChild(divTable);
-    });
-  }
-
-  renderLive(parseInt(weekSelect.value)-1); refreshStandings();
-
-  window.unlockAdmin=function(){
-    if(document.getElementById('adminPass').value==='jaw'){
-      document.getElementById('adminPanel').style.display='block'; renderAdmin();
-    } else alert('Wrong password');
-  }
-
-  let transactions=[];
-
-  function addTransactionRow(){
-    const trDiv=document.createElement('div'); trDiv.className='transaction-row';
+  // Transactions
+  const trContainer=document.getElementById('transactionRows'); trContainer.innerHTML='';
+  transactions.forEach(t=>{
+    const trDiv=document.createElement('div'); trDiv.className='admin-row transaction-row';
     trDiv.innerHTML=`<select class="transType">
-      <option value="Waiver">Waiver</option><option value="Trade">Trade</option><option value="Signed">Signed</option>
-    </select>
-    <input type="text" class="transPlayer" placeholder="Player Name">
-    <input type="text" class="transTeam" placeholder="Team">
-    <button onclick="this.parentElement.remove()">Remove</button>`;
-    document.getElementById('transactionRows').appendChild(trDiv);
-  }
+      <option value="Waiver"${t.type==='Waiver'?' selected':''}>Waiver</option>
+      <option value="Trade"${t.type==='Trade'?' selected':''}>Trade</option>
+      <option value="Drop"${t.type==='Drop'?' selected':''}>Drop</option>
+    </select> Player:<input type="text" class="transPlayer" value="${t.player}"> Team:<input type="text" class="transTeam" value="${t.team}"> <button onclick="this.parentNode.remove()">Remove</button>`;
+    trContainer.appendChild(trDiv);
+  });
+}
 
-  window.renderAdmin=function(){
-    const week=parseInt(adminWeekSelect.value)-1;
-    const editLive=document.getElementById('editLive'); editLive.innerHTML='';
-    weeks[week].forEach((m,i)=>{
-      const div=document.createElement('div');
-      div.innerHTML=`Home:<input type="text" id="home${i}" value="${m.home}"> Score:<input type="number" id="homeScore${i}" value="${m.homeScore}"> Away:<input type="text" id="away${i}" value="${m.away}"> Score:<input type="number" id="awayScore${i}" value="${m.awayScore}">`;
-      editLive.appendChild(div);
-    });
-    // Populate transactions rows
-    document.getElementById('transactionRows').innerHTML='';
-    transactions.forEach(t=>{
-      const trDiv=document.createElement('div'); trDiv.className='transaction-row';
-      trDiv.innerHTML=`<select class="transType">
-        <option value="Waiver"${t.type==='Waiver'?' selected':''}>Waiver</option>
-        <option value="Trade"${t.type==='Trade'?' selected':''}>Trade</option>
-        <option value="Signed"${t.type==='Signed'?' selected':''}>Signed</option>
-      </select>
-      <input type="text" class="transPlayer" value="${t.player}">
-      <input type="text" class="transTeam" value="${t.team}">
-      <button onclick="this.parentElement.remove()">Remove</button>`;
-      document.getElementById('transactionRows').appendChild(trDiv);
-    });
+function addTransactionRow(){
+  const trDiv=document.createElement('div'); trDiv.className='admin-row transaction-row';
+  trDiv.innerHTML=`<select class="transType">
+      <option value="Waiver">Waiver</option>
+      <option value="Trade">Trade</option>
+      <option value="Drop">Drop</option>
+    </select> Player: <input type="text" class="transPlayer"> Team: <input type="text" class="transTeam"> <button onclick="this.parentNode.remove()">Remove</button>`;
+  document.getElementById('transactionRows').appendChild(trDiv);
+}
 
-    // Load textareas
-    document.getElementById('adminPlayers').value=localStorage.getItem('playersText')||'';
-    document.getElementById('adminFreeAgents').value=localStorage.getItem('freeAgentsText')||'';
-    document.getElementById('adminDraftPool').value=localStorage.getItem('draftPoolText')||'';
-    document.getElementById('adminUpcoming').value=localStorage.getItem('upcomingText')||'';
-    document.getElementById('adminDraftResults').value=localStorage.getItem('draftResultsText')||'';
-  }
+function saveAdmin(){
+  const week=parseInt(document.getElementById('adminWeekSelect').value)-1;
+  // Save Live
+  weeks[week].forEach((m,i)=>{
+    m.home=document.getElementById(`home${i}`).value;
+    m.away=document.getElementById(`away${i}`).value;
+    m.homeScore=parseInt(document.getElementById(`homeScore${i}`).value)||0;
+    m.awayScore=parseInt(document.getElementById(`awayScore${i}`).value)||0;
+  });
+  renderLive(week);
 
-  window.saveAdmin=function(){
-    const week=parseInt(adminWeekSelect.value)-1;
-    weeks[week].forEach((m,i)=>{
-      m.home=document.getElementById(`home${i}`).value;
-      m.away=document.getElementById(`away${i}`).value;
-      m.homeScore=parseInt(document.getElementById(`homeScore${i}`).value)||0;
-      m.awayScore=parseInt(document.getElementById(`awayScore${i}`).value)||0;
-    });
-    // Save players/free agents/draft pool
-    localStorage.setItem('playersText',document.getElementById('adminPlayers').value);
-    localStorage.setItem('freeAgentsText',document.getElementById('adminFreeAgents').value);
-    localStorage.setItem('draftPoolText',document.getElementById('adminDraftPool').value);
-    localStorage.setItem('upcomingText',document.getElementById('adminUpcoming').value);
-    localStorage.setItem('draftResultsText',document.getElementById('adminDraftResults').value);
+  // Save Players
+  players=document.getElementById('adminPlayers').value.split("\n").filter(l=>l.trim()!=="");
+  renderCards('playersList',players);
 
-    // Save transactions
-    transactions=[];
-    document.querySelectorAll('#transactionRows .transaction-row').forEach(r=>{
-      const type=r.querySelector('.transType').value;
-      const player=r.querySelector('.transPlayer').value;
-      const team=r.querySelector('.transTeam').value;
-      transactions.push({type,player,team});
-    });
+  // Save Free Agents
+  freeAgents=document.getElementById('adminFreeAgents').value.split("\n").filter(l=>l.trim()!=="");
+  renderCards('freeAgentsList',freeAgents);
 
-    // Update front-end displays
-    renderLive(week); refreshStandings();
-    document.getElementById('playersList').innerHTML='';
-    document.getElementById('freeAgentsList').innerHTML='';
-    document.getElementById('draftPoolList').innerHTML='';
-    document.getElementById('playersList').textContent='';
-    document.getElementById('playersList').innerHTML=document.getElementById('adminPlayers').value.split("\n").map(p=>`<div class="card">${p}</div>`).join('');
-    document.getElementById('freeAgentsList').innerHTML=document.getElementById('adminFreeAgents').value.split("\n").map(p=>`<div class="card">${p}</div>`).join('');
-    document.getElementById('draftPoolList').innerHTML=document.getElementById('adminDraftPool').value.split("\n").map(p=>`<div class="card">${p}</div>`).join('');
+  // Save Draft Pool
+  draftPool=document.getElementById('adminDraftPool').value.split("\n").filter(l=>l.trim()!=="");
+  renderCards('draftPoolList',draftPool);
 
-    // Transactions display
-    document.getElementById('transactionsList').innerHTML='';
-    transactions.forEach(t=>{
-      const div=document.createElement('div'); div.className='card';
-      div.textContent=`[${t.type}] ${t.player} -> ${t.team}`;
-      document.getElementById('transactionsList').appendChild(div);
-    });
+  // Save Transactions
+  transactions = [];
+  document.querySelectorAll('.transaction-row').forEach(r=>{
+    transactions.push({type:r.querySelector('.transType').value,player:r.querySelector('.transPlayer').value,team:r.querySelector('.transTeam').value});
+  });
+  const transDiv=document.getElementById('transactionsList'); transDiv.innerHTML='';
+  transactions.forEach(t=>{const c=document.createElement('div'); c.className='card'; c.style.background='#555'; c.textContent=`${t.type}: ${t.player} -> ${t.team}`; transDiv.appendChild(c);});
 
-    // Save everything to LocalStorage
-    localStorage.setItem('sdlData',JSON.stringify({weeks,standings,transactions}));
-    alert('League updated and saved!');
-  }
-
-  renderLive(parseInt(weekSelect.value)-1); refreshStandings();
-});
+  refreshStandings();
+  saveState();
+  alert('League Updated!');
+}
 </script>
+
 </body>
 </html>
