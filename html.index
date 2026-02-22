@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shmears Draft League</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+<style>
+body {margin:0;font-family:'Anton',sans-serif;background:#0c0c0c;color:#fff;}
+nav {position:sticky;top:0;background:#111;display:flex;justify-content:center;gap:15px;padding:15px 0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,0.5);}
+nav a {color:#fff;text-decoration:none;font-weight:bold;padding:8px 15px;border-radius:8px;transition:0.3s;}
+nav a:hover {background:linear-gradient(90deg,#ff007f,#00bfff);color:#fff;}
+section {padding:60px 20px;text-align:center;}
+h1,h2 {margin-bottom:20px;text-shadow:0 0 10px #ff007f,0 0 20px #00bfff;}
+.card-container {display:flex;flex-wrap:wrap;justify-content:center;gap:20px;margin-top:20px;}
+.card {background:#1a1a1a;padding:20px;border-radius:12px;width:220px;box-shadow:0 0 15px rgba(255,0,127,0.3);}
+table {width:90%;max-width:900px;margin:0 auto;border-collapse:collapse;}
+th,td {border:1px solid #444;padding:10px;}
+th {background:#222;}
+footer {padding:20px;background:#000;margin-top:50px;text-align:center;font-size:14px;color:#aaa;}
+#adminPanel {background:#222;padding:20px;margin:20px auto;border-radius:12px;width:90%;max-width:800px;display:none;}
+input[type=number],input[type=text],select{width:80px;margin:2px;}
+#jsonOutput{background:#111;color:#0f0;padding:10px;margin-top:10px;overflow:auto;max-height:200px;}
+</style>
+</head>
+<body>
+
+<nav>
+<a href="#home">Home</a>
+<a href="#live">Live</a>
+<a href="#teams">Teams</a>
+<a href="#standings">Standings</a>
+<a href="#adminSection">Admin</a>
+</nav>
+
+<section id="home">
+<h1>🏆 Shmears Draft League</h1>
+<p>12 elite teams. Live scoring. Fully interactive.</p>
+</section>
+
+<section id="live">
+<h2>Live Matchups</h2>
+<div class="card-container" id="live-cards"></div>
+</section>
+
+<section id="teams">
+<h2>All Teams</h2>
+<div class="card-container" id="team-cards"></div>
+</section>
+
+<section id="standings">
+<h2>Standings</h2>
+<table id="standings-table">
+<tr><th>Team</th><th>Wins</th><th>Losses</th><th>Points</th></tr>
+</table>
+</section>
+
+<section id="adminSection">
+<h2>Admin Panel</h2>
+<input type="password" id="adminPass" placeholder="Enter admin password">
+<button onclick="unlockAdmin()">Unlock</button>
+
+<div id="adminPanel">
+<h3>Edit Teams & Scores</h3>
+<div id="editTeams"></div>
+
+<h3>Edit Live Matchups</h3>
+<div id="editLive"></div>
+<button onclick="generateJSON()">Save & Generate JSON</button>
+<pre id="jsonOutput"></pre>
+</div>
+</section>
+
+<footer>© 2026 Shmears Draft League</footer>
+
+<script>
+let data = {
+  teams:[
+    {name:"Sharks",score:0},{name:"Wolves",score:0},{name:"Falcons",score:0},{name:"Leopards",score:0},
+    {name:"Dragons",score:0},{name:"Bison",score:0},{name:"Cobras",score:0},{name:"Stallions",score:0},
+    {name:"Scorpions",score:0},{name:"Vultures",score:0},{name:"Wildcats",score:0},{name:"Iguanas",score:0}
+  ],
+  standings:[
+    {team:"Sharks",wins:0,losses:0,points:0},{team:"Wolves",wins:0,losses:0,points:0},
+    {team:"Falcons",wins:0,losses:0,points:0},{team:"Leopards",wins:0,losses:0,points:0},
+    {team:"Dragons",wins:0,losses:0,points:0},{team:"Bison",wins:0,losses:0,points:0},
+    {team:"Cobras",wins:0,losses:0,points:0},{team:"Stallions",wins:0,losses:0,points:0},
+    {team:"Scorpions",wins:0,losses:0,points:0},{team:"Vultures",wins:0,losses:0,points:0},
+    {team:"Wildcats",wins:0,losses:0,points:0},{team:"Iguanas",wins:0,losses:0,points:0}
+  ],
+  liveMatchups:[
+    {home:"Sharks",away:"Wolves",homeScore:0,awayScore:0},
+    {home:"Falcons",away:"Leopards",homeScore:0,awayScore:0}
+  ]
+};
+
+// Display Functions
+function refreshDisplay(){
+  const teamContainer=document.getElementById('team-cards');teamContainer.innerHTML='';
+  data.teams.forEach((team)=>{const card=document.createElement('div');card.className='card';card.textContent=`${team.name} 🏆 Score: ${team.score}`;teamContainer.appendChild(card);});
+
+  const table=document.getElementById('standings-table');
+  table.querySelectorAll('tr:not(:first-child)').forEach(row=>row.remove());
+  data.standings.forEach(row=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${row.team}</td><td>${row.wins}</td><td>${row.losses}</td><td>${row.points}</td>`;table.appendChild(tr);});
+
+  const liveContainer=document.getElementById('live-cards');liveContainer.innerHTML='';
+  data.liveMatchups.forEach(match=>{const card=document.createElement('div');card.className='card';card.textContent=`${match.home} ${match.homeScore} - ${match.awayScore} ${match.away}`;liveContainer.appendChild(card);});
+}
+refreshDisplay();
+
+// Admin Functions
+function unlockAdmin(){
+  const pass=document.getElementById('adminPass').value;
+  if(pass==='shmearsadmin'){document.getElementById('adminPanel').style.display='block';renderAdmin();}else{alert('Wrong password');}
+}
+
+function renderAdmin(){
+  const editDiv=document.getElementById('editTeams');editDiv.innerHTML='';
+  data.teams.forEach((team,i)=>{
+    const div=document.createElement('div');
+    div.innerHTML=`${team.name} - Score: <input type="number" id="score${i}" value="${team.score}"> Wins: <input type="number" id="wins${i}" value="${data.standings[i].wins}"> Losses: <input type="number" id="losses${i}" value="${data.standings[i].losses}"> Points: <input type="number" id="points${i}" value="${data.standings[i].points}">`;
+    editDiv.appendChild(div);
+  });
+
+  const liveDiv=document.getElementById('editLive');liveDiv.innerHTML='';
+  data.liveMatchups.forEach((match,i)=>{
+    const div=document.createElement('div');
+    div.innerHTML=`Home: <select id="home${i}">${data.teams.map((t,j)=>`<option value="${t.name}" ${t.name===match.home?'selected':''}>${t.name}</option>`).join('')}</select> Score: <input type="number" id="homeScore${i}" value="${match.homeScore}"> Away: <select id="away${i}">${data.teams.map((t,j)=>`<option value="${t.name}" ${t.name===match.away?'selected':''}>${t.name}</option>`).join('')}</select> Score: <input type="number" id="awayScore${i}" value="${match.awayScore}">`;
+    liveDiv.appendChild(div);
+  });
+}
+
+function generateJSON(){
+  data.teams.forEach((team,i)=>{
+    team.score=parseInt(document.getElementById(`score${i}`).value);
+    data.standings[i].wins=parseInt(document.getElementById(`wins${i}`).value);
+    data.standings[i].losses=parseInt(document.getElementById(`losses${i}`).value);
+    data.standings[i].points=parseInt(document.getElementById(`points${i}`).value);
+  });
+  data.liveMatchups.forEach((match,i)=>{
+    match.home=document.getElementById(`home${i}`).value;
+    match.away=document.getElementById(`away${i}`).value;
+    match.homeScore=parseInt(document.getElementById(`homeScore${i}`).value);
+    match.awayScore=parseInt(document.getElementById(`awayScore${i}`).value);
+  });
+  document.getElementById('jsonOutput').textContent=JSON.stringify(data,null,2);
+  refreshDisplay();
+}
+</script>
+
+</body>
+</html>
